@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Header } from './components/Header';
+import { RotateCw } from 'lucide-react';
 import { Tabs } from './components/Tabs';
 import { FieldTable } from './components/FieldTable';
 import { MappingRules } from './components/MappingRules';
@@ -24,6 +25,15 @@ function App() {
     const [poc, setPoc] = useState('');
 
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [showRefresh, setShowRefresh] = useState(false);
+
+    const handleRefreshPage = async () => {
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (tab?.id) {
+            chrome.tabs.reload(tab.id);
+            window.close(); // Close popup
+        }
+    };
 
     // Instantiations
     const mappingEngine = useMemo(() => new MappingEngine(), []);
@@ -52,6 +62,7 @@ function App() {
     useEffect(() => {
         const init = async () => {
             setStatusMsg("Detecting Context...");
+            setShowRefresh(false);
             try {
                 const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
                 if (!tab || !tab.id) {
@@ -107,6 +118,7 @@ function App() {
                 } catch (err) {
                     console.error(err);
                     setStatusMsg("Please Refresh the Salesforce Page.");
+                    setShowRefresh(true);
                 }
 
             } catch (e: any) {
@@ -191,7 +203,7 @@ function App() {
                             onChange={(e) => setFilter(e.target.value)}
                         />
                         <button
-                            className="bg-transparent border border-border dark:border-border-dark text-success bg-success/10 hover:bg-success hover:text-white px-4 py-2 rounded text-[13px] font-medium transition-colors cursor-pointer whitespace-nowrap"
+                            className="bg-transparent border border-success dark:border-success text-success bg-success/10 hover:bg-success hover:text-white px-4 py-2 rounded text-[13px] font-medium transition-colors cursor-pointer whitespace-nowrap"
                             onClick={() => setIsModalOpen(true)}
                         >
                             + Add Virtual Field
@@ -220,9 +232,20 @@ function App() {
             )}
 
             <footer className="px-6 py-4 bg-white dark:bg-[#121212] border-t border-border dark:border-border-dark flex justify-between items-center mt-auto">
-                <span id="statusMsg" className="text-xs text-text-secondary dark:text-text-dark-secondary font-medium flex items-center gap-1.5 before:content-['●'] before:text-success before:text-[8px]">
-                    {statusMsg}
-                </span>
+                <div className="flex items-center gap-2">
+                    <span id="statusMsg" className="text-xs text-text-secondary dark:text-text-dark-secondary font-medium flex items-center gap-1.5 before:content-['●'] before:text-success before:text-[8px]">
+                        {statusMsg}
+                    </span>
+                    {showRefresh && (
+                        <button
+                            onClick={handleRefreshPage}
+                            className="p-1 rounded-full bg-green-100 hover:bg-green-200 text-green-600 dark:bg-green-900/30 dark:hover:bg-green-900/50 dark:text-green-400 transition-colors"
+                            title="Refresh Page"
+                        >
+                            <RotateCw size={14} />
+                        </button>
+                    )}
+                </div>
                 <button
                     onClick={handleGenerate}
                     className="bg-primary hover:bg-primary-hover text-white px-5 py-2.5 rounded text-[13px] font-medium transition-transform active:scale-95 shadow-sm hover:shadow-md"
