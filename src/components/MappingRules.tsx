@@ -3,9 +3,10 @@ import { MappingEngine } from '../utils/mappingEngine';
 
 interface MappingRulesProps {
     mappingEngine: MappingEngine;
+    isFullScreen: boolean;
 }
 
-export const MappingRules: React.FC<MappingRulesProps> = ({ mappingEngine }) => {
+export const MappingRules: React.FC<MappingRulesProps> = ({ mappingEngine, isFullScreen }) => {
     const [mappings, setMappings] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(true);
 
@@ -42,7 +43,7 @@ export const MappingRules: React.FC<MappingRulesProps> = ({ mappingEngine }) => 
     const bqTypes = ["STRING", "NUMERIC", "BOOL", "DATE", "TIMESTAMP", "BYTES"];
 
     return (
-        <div className="p-6 h-[380px] overflow-y-auto bg-surface dark:bg-[#1E1E1E] m-3 rounded-lg shadow-[inset_0_0_0_1px_rgba(233,236,239,1)] dark:shadow-[inset_0_0_0_1px_rgba(45,45,45,1)]">
+        <div className={`bg-surface dark:bg-[#1E1E1E] rounded-lg shadow-[inset_0_0_0_1px_rgba(233,236,239,1)] dark:shadow-[inset_0_0_0_1px_rgba(45,45,45,1)] ${isFullScreen ? 'h-full p-4 overflow-y-auto' : 'p-6 h-[380px] overflow-y-auto m-3'}`}>
             <h3 className="mt-0 mb-5 text-lg font-semibold text-primary">Data Type Mapping</h3>
 
             <div className="w-full border border-border dark:border-border-dark rounded-md overflow-hidden text-[13px] mb-4">

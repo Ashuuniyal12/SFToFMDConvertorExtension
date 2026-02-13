@@ -6,11 +6,12 @@ interface SettingsProps {
     setIncludeSystemFields: (val: boolean) => void;
     poc: string;
     setPoc: (val: string) => void;
+    isFullScreen: boolean;
 }
 
-export const Settings: React.FC<SettingsProps> = ({ currentObject, includeSystemFields, setIncludeSystemFields, poc, setPoc }) => {
+export const Settings: React.FC<SettingsProps> = ({ currentObject, includeSystemFields, setIncludeSystemFields, poc, setPoc, isFullScreen }) => {
     return (
-        <div className="p-6 h-[380px] overflow-y-auto bg-surface dark:bg-[#1E1E1E] m-3 rounded-lg shadow-[inset_0_0_0_1px_rgba(233,236,239,1)] dark:shadow-[inset_0_0_0_1px_rgba(45,45,45,1)]">
+        <div className={`bg-surface dark:bg-[#1E1E1E] rounded-lg shadow-[inset_0_0_0_1px_rgba(233,236,239,1)] dark:shadow-[inset_0_0_0_1px_rgba(45,45,45,1)] ${isFullScreen ? 'p-8' : 'p-6 h-[380px] overflow-y-auto m-3'}`}>
             <h3 className="mt-0 mb-5 text-lg font-semibold text-primary">Extension Settings</h3>
 
             <div className="mb-6 p-4 bg-white dark:bg-[#121212] rounded-md border border-border dark:border-border-dark">

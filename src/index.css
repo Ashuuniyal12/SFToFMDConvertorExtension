@@ -27,7 +27,7 @@
 }
 
 body {
-    @apply w-[600px] h-[550px] m-0 p-0 font-sans bg-white text-text-primary transition-colors duration-300 overflow-hidden dark:bg-[#121212] dark:text-text-dark-primary;
+    @apply  m-0 p-0 font-sans bg-white text-text-primary transition-colors duration-300 overflow-hidden dark:bg-[#121212] dark:text-text-dark-primary;
 }
 
 /* Scrollbar Customization */
