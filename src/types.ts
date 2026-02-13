@@ -19,6 +19,7 @@ export interface SalesforceDescribeResult {
 export interface MappingConfig {
     dataset?: string;
     table?: string;
+    poc?: string;
 }
 
 export interface FMDRow {

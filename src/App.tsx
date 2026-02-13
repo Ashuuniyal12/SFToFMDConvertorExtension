@@ -21,6 +21,7 @@ function App() {
     const [fields, setFields] = useState<SalesforceField[]>([]);
     const [filter, setFilter] = useState('');
     const [includeSystemFields, setIncludeSystemFields] = useState(false);
+    const [poc, setPoc] = useState('');
 
     const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -148,7 +149,8 @@ function App() {
         setStatusMsg("Generating Excel...");
         try {
             const config = {
-                table: currentObject ? currentObject.toLowerCase() : "output_table"
+                table: currentObject ? currentObject.toLowerCase() : "output_table",
+                poc: poc
             };
             const buffer = await excelGenerator.generateFMD(currentObject || "Export", selected, mappingEngine, config);
             const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
@@ -200,6 +202,8 @@ function App() {
                     currentObject={currentObject}
                     includeSystemFields={includeSystemFields}
                     setIncludeSystemFields={setIncludeSystemFields}
+                    poc={poc}
+                    setPoc={setPoc}
                 />
             )}
 
