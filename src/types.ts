@@ -8,9 +8,21 @@ export interface SalesforceField {
     nillable?: boolean;
     calculated?: boolean;
     custom?: boolean;
+    dfMapping?: {
+        mappedDfName?: string;
+        manualDf?: {
+            label: string;
+            name: string;
+            type: string;
+            length?: number;
+            precision?: number;
+            scale?: number;
+        };
+    };
     // UI state
     selected?: boolean;
     isVirtual?: boolean;
+    hidden?: boolean;
 }
 
 export interface SalesforceDescribeResult {

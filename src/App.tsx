@@ -6,6 +6,7 @@ import { FieldTable } from './components/FieldTable';
 import { MappingRules } from './components/MappingRules';
 import { Settings } from './components/Settings';
 import { VirtualFieldModal } from './components/VirtualFieldModal';
+import { ConfirmationModal } from './components/ConfirmationModal';
 import { SalesforceApi } from './utils/salesforceApi';
 import { MappingEngine } from './utils/mappingEngine';
 import { ExcelGenerator } from './utils/excelGenerator';
@@ -25,6 +26,7 @@ function App() {
     const [poc, setPoc] = useState('');
 
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const [showRefresh, setShowRefresh] = useState(false);
     const [isFullScreen, setIsFullScreen] = useState(false);
 
@@ -64,13 +66,68 @@ function App() {
     const fetchFields = async (api: SalesforceApi, objectName: string) => {
         setStatusMsg("Fetching Metadata...");
         try {
-            const metadata = await api.describe(objectName);
-            const mappedFields = metadata.fields.map(f => ({
+            const [metadata, dfMappings] = await Promise.all([
+                api.describe(objectName),
+                api.getDFMappings(objectName)
+            ]);
+
+            // First pass: Create initial map with explicit type
+            let tempFields: SalesforceField[] = metadata.fields.map(f => ({
                 ...f,
-                selected: true
+                selected: true,
+                dfMapping: {
+                    mappedDfName: dfMappings[f.name],
+                    manualDf: undefined
+                }
             }));
-            setFields(mappedFields);
-            setStatusMsg(`Loaded ${mappedFields.length} fields.`);
+
+            // Second pass: Link DFs and Hide them
+            const fieldsByName = new Map(tempFields.map(f => [f.name, f]));
+
+            tempFields = tempFields.map(f => {
+                if (f.calculated && f.dfMapping?.mappedDfName) {
+                    const dfField = fieldsByName.get(f.dfMapping.mappedDfName);
+                    if (dfField) {
+                        // Mark DF field as hidden
+                        dfField.hidden = true;
+
+                        // Populate details into manualDf for display
+                        return {
+                            ...f,
+                            dfMapping: {
+                                ...f.dfMapping,
+                                manualDf: {
+                                    label: dfField.label,
+                                    name: dfField.name,
+                                    type: dfField.type,
+                                    length: dfField.length,
+                                    precision: dfField.precision,
+                                    scale: dfField.scale
+                                }
+                            }
+                        };
+                    }
+                } else if (f.calculated && !f.dfMapping?.mappedDfName) {
+                    return {
+                        ...f,
+                        dfMapping: {
+                            ...f.dfMapping,
+                            manualDf: {
+                                label: `DF ${f.label}`,
+                                name: `DF_${f.name.replace(/__c$/, '')}__c`,
+                                type: f.type,
+                                length: f.length,
+                                precision: f.precision,
+                                scale: f.scale
+                            }
+                        }
+                    };
+                }
+                return f;
+            });
+
+            setFields(tempFields);
+            setStatusMsg(`Loaded ${tempFields.filter(f => !f.hidden).length} visible fields.`);
         } catch (e: any) {
             console.error(e);
             setStatusMsg(`Error: ${e.message}`);
@@ -87,20 +144,92 @@ function App() {
 
     // Filter Logic
     const filteredFields = fields.filter(f =>
-        f.name.toLowerCase().includes(filter.toLowerCase()) ||
-        f.label.toLowerCase().includes(filter.toLowerCase())
+        !f.hidden &&
+        (f.name.toLowerCase().includes(filter.toLowerCase()) ||
+            f.label.toLowerCase().includes(filter.toLowerCase()))
     );
 
     const handleAddVirtualField = (field: SalesforceField) => {
         setFields([field, ...fields]);
     };
 
-    const handleGenerate = async () => {
-        const selected = fields.filter(f => f.selected);
+    const handleUpdateDf = (index: number, dfData: any) => {
+        const fieldName = filteredFields[index].name;
+        setFields(prev => prev.map(f => {
+            if (f.name === fieldName) {
+                return {
+                    ...f,
+                    dfMapping: {
+                        ...f.dfMapping,
+                        manualDf: dfData
+                    }
+                };
+            }
+            return f;
+        }));
+    };
+
+    const handleGenerateClick = () => {
+        const selected = fields.filter(f => f.selected && !f.hidden);
         if (selected.length === 0) {
             alert("Please select at least one field.");
             return;
         }
+        setIsConfirmModalOpen(true);
+    };
+
+    const setFieldForFinalExport = (fields: SalesforceField[]) => {
+        const selected = fields.filter(f => f.selected && !f.hidden);
+        const normalFieldsAndOnlyDFdetailsforFormulaFields = selected.map(f => {
+            if (f.calculated && f.dfMapping?.manualDf != undefined) {
+                return {
+                    ...f,
+                    label: f.dfMapping?.manualDf?.label || f.label,
+                    name: f.dfMapping?.manualDf?.name || f.name,
+                    type: f.dfMapping?.manualDf?.type || f.type,
+                    length: f.dfMapping?.manualDf?.length || f.length,
+                    precision: f.dfMapping?.manualDf?.precision || f.precision,
+                    scale: f.dfMapping?.manualDf?.scale || f.scale,
+                };
+            }
+            return f;
+        });
+        return normalFieldsAndOnlyDFdetailsforFormulaFields;
+    }
+
+    const executeGenerate = async () => {
+        setIsConfirmModalOpen(false);
+        const fieldsWithDFDetailsandNormalFields = setFieldForFinalExport(fields);
+        //const selected = fields.filter(f => f.selected && !f.hidden);
+
+        // Prepare fields with DF logic
+        const finalFields = fieldsWithDFDetailsandNormalFields.map(f => {
+            if (f.calculated) {
+                if (f.dfMapping?.mappedDfName) {
+                    // Try to find the DF field in the full list
+                    const dfField = fields.find(field => field.name === f.dfMapping?.mappedDfName);
+                    if (dfField) {
+                        return { ...dfField };
+                    }
+                } else if (f.dfMapping?.manualDf) {
+                    // Use Manual DF
+                    return {
+                        name: f.dfMapping.manualDf.name,
+                        label: f.dfMapping.manualDf.label,
+                        type: f.dfMapping.manualDf.type,
+                        length: f.dfMapping.manualDf.length,
+                        precision: f.dfMapping.manualDf.precision,
+                        scale: f.dfMapping.manualDf.scale,
+                        selected: true,
+                        isVirtual: true // Treat as virtual/custom for generation
+                    } as SalesforceField;
+                }
+            }
+            return f;
+        });
+
+        console.log("the final fields are ->", finalFields);
+
 
         setStatusMsg("Generating Excel...");
         try {
@@ -108,7 +237,7 @@ function App() {
                 table: currentObject ? currentObject.toLowerCase() : "output_table",
                 poc: poc
             };
-            const buffer = await excelGenerator.generateFMD(currentObject || "Export", selected, mappingEngine, config);
+            const buffer = await excelGenerator.generateFMD(currentObject || "Export", finalFields, mappingEngine, config);
             const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
             const filename = `FMD_${currentObject || "Export"}_${dateStr}.xlsx`;
             excelGenerator.downloadExcel(buffer, filename);
@@ -278,17 +407,20 @@ function App() {
                             fields={filteredFields}
                             onToggleField={(idx, sel) => handleToggleFieldName(filteredFields[idx].name, sel)}
                             onToggleAll={handleToggleAll}
+                            onUpdateDf={handleUpdateDf}
                         />
                     </div>
                 </div>
             )}
 
+            {/* ... Mapping and Settings Tabs ... */}
             {activeTab === 'mapping' && (
                 <div className={`flex-1 ${isFullScreen ? 'm-4 overflow-hidden' : 'm-3 h-[380px] overflow-hidden'}`}>
                     <MappingRules mappingEngine={mappingEngine} isFullScreen={isFullScreen} />
                 </div>
             )}
 
+            {/* ... */}
             {activeTab === 'settings' && (
                 <div className={`h-full ${isFullScreen ? 'flex-1 overflow-y-auto flex justify-center pt-10 bg-surface dark:bg-[#1E1E1E]' : ''}`}>
                     <div className={isFullScreen ? 'w-full max-w-5xl' : 'w-full'}>
@@ -320,7 +452,7 @@ function App() {
                     )}
                 </div>
                 <button
-                    onClick={handleGenerate}
+                    onClick={handleGenerateClick}
                     className="bg-primary hover:bg-primary-hover text-white px-5 py-2.5 rounded text-[13px] font-medium transition-transform active:scale-95 shadow-sm hover:shadow-md"
                 >
                     Generate FMD
@@ -331,6 +463,14 @@ function App() {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onAdd={handleAddVirtualField}
+            />
+
+            <ConfirmationModal
+                isOpen={isConfirmModalOpen}
+                onClose={() => setIsConfirmModalOpen(false)}
+                onConfirm={executeGenerate}
+                fields={setFieldForFinalExport(fields)}
+                objectName={currentObject || 'Unknown'}
             />
         </div>
     );

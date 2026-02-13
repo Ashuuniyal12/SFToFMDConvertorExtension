@@ -67,4 +67,24 @@ export class SalesforceApi {
         }
         return idOrName;
     }
+
+    async getDFMappings(objectName: string): Promise<Record<string, string>> {
+        try {
+            const q = `SELECT Additional_Field_for_FF__c, Formula_Field_API_Name__c FROM DF_Formula_Field_Mapping__mdt WHERE Object_API_name__c = '${objectName}'`;
+            const result = await this.query(q);
+
+            const mappings: Record<string, string> = {};
+            if (result.records) {
+                result.records.forEach((rec: any) => {
+                    if (rec.Formula_Field_API_Name__c && rec.Additional_Field_for_FF__c) {
+                        mappings[rec.Formula_Field_API_Name__c] = rec.Additional_Field_for_FF__c;
+                    }
+                });
+            }
+            return mappings;
+        } catch (e) {
+            console.warn("Failed to fetch DF mappings (Custom Metadata might not exist)", e);
+            return {};
+        }
+    }
 }
