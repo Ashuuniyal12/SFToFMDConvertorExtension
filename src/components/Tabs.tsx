@@ -1,4 +1,5 @@
 import React from 'react';
+import { List, ArrowRightLeft, Settings } from 'lucide-react';
 
 interface TabsProps {
     activeTab: string;
@@ -7,9 +8,9 @@ interface TabsProps {
 
 export const Tabs: React.FC<TabsProps> = ({ activeTab, setActiveTab }) => {
     const tabs = [
-        { id: 'fields', label: 'Fields' },
-        { id: 'mapping', label: 'Mapping Rules' },
-        { id: 'settings', label: 'Settings' }
+        { id: 'fields', label: 'Fields', icon: List },
+        { id: 'mapping', label: 'Mapping Rules', icon: ArrowRightLeft },
+        { id: 'settings', label: 'Settings', icon: Settings }
     ];
 
     return (
@@ -18,13 +19,14 @@ export const Tabs: React.FC<TabsProps> = ({ activeTab, setActiveTab }) => {
                 <button
                     key={tab.id}
                     className={`
-            px-1 py-3 bg-transparent border-none text-sm font-medium cursor-pointer relative transition-colors duration-200
+            flex items-center gap-2 px-1 py-3 bg-transparent border-none text-sm font-medium cursor-pointer relative transition-colors duration-200
             ${activeTab === tab.id
                             ? 'text-primary font-semibold after:content-[""] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-primary after:rounded-t'
                             : 'text-text-secondary dark:text-text-dark-secondary hover:text-primary dark:hover:text-primary'}
           `}
                     onClick={() => setActiveTab(tab.id)}
                 >
+                    <tab.icon size={16} />
                     {tab.label}
                 </button>
             ))}
