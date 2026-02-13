@@ -29,4 +29,42 @@ export class SalesforceApi {
 
         return await response.json();
     }
+    async query(soql: string): Promise<any> {
+        const url = `${this.domain}/services/data/${this.apiVersion}/query?q=${encodeURIComponent(soql)}`;
+
+        const response = await fetch(url, {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${this.sessionId}`,
+                "Content-Type": "application/json"
+            }
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Salesforce Query Error: ${response.status} - ${errorText}`);
+        }
+
+        return await response.json();
+    }
+
+    async resolveApiName(idOrName: string): Promise<string> {
+        // Check if it looks like a Custom Object ID (starts with 01I) or just a general ID pattern
+        if (idOrName.startsWith('01I') || /^[a-zA-Z0-9]{15,18}$/.test(idOrName)) {
+            try {
+                // Try querying EntityDefinition
+                // DurableId is often the ID for CustomObjects in Setup
+                // Let's try DurableId match first.
+                const q = `SELECT QualifiedApiName FROM EntityDefinition WHERE DurableId = '${idOrName}'`;
+                const result = await this.query(q);
+
+                if (result.records && result.records.length > 0) {
+                    return result.records[0].QualifiedApiName;
+                }
+            } catch (e) {
+                console.warn("Failed to resolve via EntityDefinition, trying CustomObject...", e);
+            }
+        }
+        return idOrName;
+    }
 }

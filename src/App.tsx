@@ -84,10 +84,22 @@ function App() {
                     const contextResp = await chrome.tabs.sendMessage(tab.id, { action: "GET_OBJECT_CONTEXT" });
 
                     if (contextResp && contextResp.objectName) {
-                        setCurrentObject(contextResp.objectName);
-                        setStatusMsg(`Object: ${contextResp.objectName}`);
+                        let objName = contextResp.objectName;
+
+                        // Resolve ID to Name if necessary
                         if (api) {
-                            fetchFields(api, contextResp.objectName);
+                            setStatusMsg("Resolving Object Name...");
+                            try {
+                                objName = await api.resolveApiName(objName);
+                            } catch (e) {
+                                console.warn("Name resolution failed, using original", e);
+                            }
+                        }
+
+                        setCurrentObject(objName);
+                        setStatusMsg(`Object: ${objName}`);
+                        if (api) {
+                            fetchFields(api, objName);
                         }
                     } else {
                         setStatusMsg("Please go to Setup > Object Manager > [Object]");
