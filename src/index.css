@@ -1,0 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+@import "tailwindcss";
+
+@variant dark (&:where(.dark, .dark *));
+
+@theme {
+    --font-sans: 'Inter', sans-serif;
+
+    --color-primary: #A100FF;
+    --color-primary-hover: #8a00db;
+
+    --color-surface: #F8F9FA;
+    --color-surface-dark: #1E1E1E;
+
+    --color-border: #E9ECEF;
+    --color-border-dark: #2D2D2D;
+
+    --color-text-primary: #212529;
+    --color-text-secondary: #6C757D;
+
+    --color-text-dark-primary: #E9ECEF;
+    --color-text-dark-secondary: #A0A0A0;
+
+    --color-success: #10B981;
+    --color-error: #dc3545;
+}
+
+body {
+    @apply w-[600px] h-[550px] m-0 p-0 font-sans bg-white text-text-primary transition-colors duration-300 overflow-hidden dark:bg-[#121212] dark:text-text-dark-primary;
+}
+
+/* Scrollbar Customization */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-[4px] hover:bg-text-secondary dark:bg-border-dark;
+}

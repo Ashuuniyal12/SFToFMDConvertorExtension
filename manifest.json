@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
-    "name": "SF FMD Generator",
-    "version": "1.0",
+    "name": "SF FMD Generator (React)",
+    "version": "2.0",
     "description": "Generate BigQuery Field Mapping Document from Salesforce Object Metadata",
     "permissions": [
         "activeTab",
@@ -17,7 +17,7 @@
         "https://*.salesforce-setup.com/*"
     ],
     "action": {
-        "default_popup": "popup.html",
+        "default_popup": "index.html",
         "default_icon": {
             "16": "assets/icon16.png",
             "48": "assets/icon48.png",
@@ -25,7 +25,7 @@
         }
     },
     "background": {
-        "service_worker": "background.js"
+        "service_worker": "src/background.ts"
     },
     "content_scripts": [
         {
@@ -36,12 +36,12 @@
                 "https://*.salesforce-setup.com/*"
             ],
             "js": [
-                "content.js"
+                "src/content.ts"
             ]
         }
     ],
     "content_security_policy": {
-        "extension_pages": "script-src 'self'; object-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;"
+        "extension_pages": "script-src 'self'; object-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;"
     },
     "web_accessible_resources": [
         {

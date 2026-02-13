@@ -1,0 +1,40 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+    content: [
+        "./index.html",
+        "./src/**/*.{js,ts,jsx,tsx}",
+    ],
+    theme: {
+        extend: {
+            colors: {
+                primary: {
+                    DEFAULT: '#A100FF',
+                    hover: '#8a00db',
+                },
+                surface: {
+                    DEFAULT: '#F8F9FA',
+                    dark: '#1E1E1E',
+                },
+                border: {
+                    DEFAULT: '#E9ECEF',
+                    dark: '#2D2D2D',
+                },
+                text: {
+                    primary: '#212529',
+                    secondary: '#6C757D',
+                    dark: {
+                        primary: '#E9ECEF',
+                        secondary: '#A0A0A0',
+                    }
+                },
+                success: '#10B981',
+                error: '#dc3545',
+            },
+            fontFamily: {
+                sans: ['Inter', 'sans-serif'],
+            }
+        },
+    },
+    plugins: [],
+    darkMode: 'class',
+}
