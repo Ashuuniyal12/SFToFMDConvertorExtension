@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SF FMD Generator</title>
+    <link rel="stylesheet" href="theme.css">
+</head>
+
+<body>
+
+    <header>
+        <div class="logo-area">
+            <h1>SF FMD Generator</h1>
+        </div>
+        <div class="theme-switch" id="themeToggle" title="Toggle Dark Mode">
+            <!-- Icon injected by JS -->
+        </div>
+    </header>
+
+    <div class="tabs">
+        <button class="tab active" data-tab="fields">Fields</button>
+        <button class="tab" data-tab="mapping">Mapping Rules</button>
+        <button class="tab" data-tab="settings">Settings</button>
+    </div>
+
+    <!-- Fields Tab -->
+    <div id="fields" class="container tab-content">
+        <div class="controls">
+            <input type="text" id="searchFields" placeholder="Filter fields...">
+            <button id="addVirtualFieldBtn" class="actionButton">+ Add Virtual Field</button>
+        </div>
+        <table class="data-grid">
+            <thead>
+                <tr>
+                    <th><input type="checkbox" id="selectAll"></th>
+                    <th>API Name</th>
+                    <th>Label</th>
+                    <th>Type</th>
+                    <th>Length</th>
+                </tr>
+            </thead>
+            <tbody id="fieldsBody">
+                <!-- Rows injected by JS -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Mapping Rules Tab -->
+    <div id="mapping" class="container tab-content hidden">
+        <h3>Data Type Mapping</h3>
+        <table class="data-grid mapping-table">
+            <thead>
+                <tr>
+                    <th>Salesforce Type</th>
+                    <th>BigQuery Type</th>
+                </tr>
+            </thead>
+            <tbody id="mappingBody">
+                <!-- Mapping rows injected by JS -->
+            </tbody>
+        </table>
+        <div style="margin-top: 10px;">
+            <button id="saveMappingBtn">Save Rules</button>
+            <button id="resetMappingBtn" class="secondary">Reset to Default</button>
+        </div>
+    </div>
+
+    <!-- Settings Tab -->
+    <div id="settings" class="container tab-content hidden">
+        <h3>Extension Settings</h3>
+        <p>Current Object: <span id="currentObject" style="font-weight: bold;">Detecting...</span></p>
+        <label>
+            <input type="checkbox" id="includeSystemFields"> Include System Fields (CreatedBy, LastModifiedBy)
+        </label>
+    </div>
+
+    <footer>
+        <span id="statusMsg" style="float: left; font-size: 12px; margin-top: 8px;">Ready</span>
+        <button id="generateBtn">Generate FMD</button>
+    </footer>
+
+    <!-- Virtual Field Modal -->
+    <div id="virtualFieldModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Add Virtual Field</h3>
+            <div class="form-group">
+                <label for="vfApiName">API Name <span class="required">*</span></label>
+                <input type="text" id="vfApiName" placeholder="e.g. My_Custom_Field__c">
+            </div>
+            <div class="form-group">
+                <label for="vfLabel">Label <span class="required">*</span></label>
+                <input type="text" id="vfLabel" placeholder="e.g. My Custom Field">
+            </div>
+            <div class="form-group">
+                <label for="vfType">Type <span class="required">*</span></label>
+                <select id="vfType">
+                    <option value="string">String</option>
+                    <option value="double">Double</option>
+                    <option value="currency">Currency</option>
+                    <option value="date">Date</option>
+                    <option value="datetime">DateTime</option>
+                    <option value="boolean">Boolean</option>
+                    <option value="id">ID</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="vfLength">Length</label>
+                <input type="number" id="vfLength" placeholder="255">
+            </div>
+            <div class="modal-actions">
+                <button id="vfCancelBtn" class="btn-cancel">Cancel</button>
+                <button id="vfOkBtn" class="btn-ok">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="utils/salesforceApi.js"></script>
+    <script src="utils/exceljs.min.js"></script> <!-- Placeholder for ExcelJS -->
+    <script src="mappingEngine.js"></script>
+    <script src="excelGenerator.js"></script>
+    <script src="popup.js"></script>
+</body>
+
+</html>
