@@ -6,6 +6,8 @@ export interface SalesforceField {
     precision?: number;
     scale?: number;
     nillable?: boolean;
+    calculated?: boolean;
+    custom?: boolean;
     // UI state
     selected?: boolean;
     isVirtual?: boolean;
