@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 import { Header } from './components/Header';
-import { RotateCw } from 'lucide-react';
+import { RotateCw, Loader2 } from 'lucide-react';
 import { Tabs } from './components/Tabs';
 import { FieldTable } from './components/FieldTable';
 import { MappingRules } from './components/MappingRules';
@@ -13,6 +13,9 @@ import { ExcelGenerator } from './utils/excelGenerator';
 import { SalesforceField } from './types';
 import './index.css';
 
+// Lazy load RelationshipGraph to avoid header bloat and ensure fast initial load
+const RelationshipGraph = lazy(() => import('./modules/relationship-graph/components/RelationshipGraph').then(module => ({ default: module.RelationshipGraph })));
+
 function App() {
     // State
     const [theme, setTheme] = useState<'light' | 'dark'>('light');
@@ -24,6 +27,7 @@ function App() {
     const [filter, setFilter] = useState('');
     const [includeSystemFields, setIncludeSystemFields] = useState(false);
     const [poc, setPoc] = useState('');
+    const [sfApi, setSfApi] = useState<SalesforceApi | null>(null);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -52,7 +56,7 @@ function App() {
     }, [theme]);
 
     useEffect(() => {
-        // Check if we are in full screen mode (via URL param or just window size check if simpler, but URL param is safer for context)
+        // Check if we are in full screen mode
         const params = new URLSearchParams(window.location.search);
         if (params.get('tabId')) {
             setIsFullScreen(true);
@@ -200,7 +204,6 @@ function App() {
     const executeGenerate = async () => {
         setIsConfirmModalOpen(false);
         const fieldsWithDFDetailsandNormalFields = setFieldForFinalExport(fields);
-        //const selected = fields.filter(f => f.selected && !f.hidden);
 
         // Prepare fields with DF logic
         const finalFields = fieldsWithDFDetailsandNormalFields.map(f => {
@@ -284,7 +287,7 @@ function App() {
             let api: SalesforceApi | null = null;
             if (sessionResp && sessionResp.sid) {
                 api = new SalesforceApi(sessionResp.instanceUrl, sessionResp.sid);
-                // setSfApi(api);
+                setSfApi(api);
                 setStatusMsg("Session Found.");
             } else {
                 setStatusMsg("Not logged in or Session not found.");
@@ -413,6 +416,19 @@ function App() {
                 </div>
             )}
 
+            {/* Relationships Tab */}
+            {activeTab === 'relationships' && (
+                <div className={`flex-1 ${isFullScreen ? 'm-4 border border-border dark:border-border-dark rounded-lg overflow-hidden' : 'h-[380px] m-3 rounded-lg overflow-hidden'}`}>
+                    <Suspense fallback={
+                        <div className="flex h-full items-center justify-center text-text-secondary gap-2">
+                            <Loader2 className="animate-spin" size={20} /> Loading Graph Module...
+                        </div>
+                    }>
+                        <RelationshipGraph api={sfApi} currentObject={currentObject} />
+                    </Suspense>
+                </div>
+            )}
+
             {/* ... Mapping and Settings Tabs ... */}
             {activeTab === 'mapping' && (
                 <div className={`flex-1 ${isFullScreen ? 'm-4 overflow-hidden' : 'm-3 h-[380px] overflow-hidden'}`}>
@@ -451,12 +467,14 @@ function App() {
                         </button>
                     )}
                 </div>
-                <button
-                    onClick={handleGenerateClick}
-                    className="bg-primary hover:bg-primary-hover text-white px-5 py-2.5 rounded text-[13px] font-medium transition-transform active:scale-95 shadow-sm hover:shadow-md"
-                >
-                    Generate FMD
-                </button>
+                {activeTab === 'fields' && (
+                    <button
+                        onClick={handleGenerateClick}
+                        className="bg-primary hover:bg-primary-hover text-white px-5 py-2.5 rounded text-[13px] font-medium transition-transform active:scale-95 shadow-sm hover:shadow-md"
+                    >
+                        Generate FMD
+                    </button>
+                )}
             </footer>
 
             <VirtualFieldModal

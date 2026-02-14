@@ -1,5 +1,5 @@
 import React from 'react';
-import { List, ArrowRightLeft, Settings } from 'lucide-react';
+import { List, ArrowRightLeft, Settings, Share2 } from 'lucide-react';
 
 interface TabsProps {
     activeTab: string;
@@ -10,6 +10,7 @@ export const Tabs: React.FC<TabsProps> = ({ activeTab, setActiveTab }) => {
     const tabs = [
         { id: 'fields', label: 'Fields', icon: List },
         { id: 'mapping', label: 'Mapping Rules', icon: ArrowRightLeft },
+        { id: 'relationships', label: 'Relationships', icon: Share2 },
         { id: 'settings', label: 'Settings', icon: Settings }
     ];
 
