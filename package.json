@@ -22,7 +22,7 @@
     "typescript": "^5.9.3",
     "vite": "^7.3.1"
   },
-  "name": "sftobigqueryfmdgeneratorextension",
+  "name": "schemaforge-studio",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",

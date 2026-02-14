@@ -13,7 +13,10 @@ export const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onMaximize, 
         <header className="flex justify-between items-center px-6 py-4 bg-white dark:bg-surface-dark border-b border-border dark:border-border-dark flex-shrink-0 box-border h-[60px]">
             <div className="flex items-center gap-3">
                 <img src="assets/icon48.png" alt="Logo" className="w-8 h-8" />
-                <h1 className="text-lg font-bold m-0 text-primary uppercase tracking-tight">Salesforce FMD Generator</h1>
+                <div className="flex flex-col justify-center">
+                    <h1 className="text-[16px] font-bold m-0 text-primary dark:text-[var(--color-primary)] tracking-tight leading-none">SchemaForge Studio</h1>
+                    <span className="text-[10px] font-medium text-text-secondary dark:text-text-dark-secondary tracking-wide">Salesforce Metadata Automation</span>
+                </div>
             </div>
             <div className="flex items-center gap-2">
                 {!isFullScreen && (
