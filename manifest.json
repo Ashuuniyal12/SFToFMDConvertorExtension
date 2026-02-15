@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "SchemaForge Studio",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Generate BigQuery Field Mapping Document from Salesforce Object Metadata",
     "permissions": [
         "activeTab",
