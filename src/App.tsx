@@ -157,8 +157,8 @@ function App() {
         setFields([field, ...fields]);
     };
 
-    const handleUpdateDf = (index: number, dfData: any) => {
-        const fieldName = filteredFields[index].name;
+    const handleUpdateDf = (fieldName: string, dfData: any) => {
+        // const fieldName = filteredFields[index].name; // Removed lookup
         setFields(prev => prev.map(f => {
             if (f.name === fieldName) {
                 return {
@@ -388,7 +388,7 @@ function App() {
 
             {activeTab === 'fields' && (
                 <div id="fields" className={`bg-surface dark:bg-[#1E1E1E] rounded-lg shadow-[inset_0_0_0_1px_rgba(233,236,239,1)] dark:shadow-[inset_0_0_0_1px_rgba(45,45,45,1)] overflow-hidden flex flex-col ${isFullScreen ? 'flex-1 m-4 border border-border dark:border-border-dark' : 'h-[380px] m-3 p-6 overflow-y-auto'}`}>
-                    <div className={isFullScreen ? 'p-4 border-b border-border dark:border-border-dark' : 'mb-4'}>
+                    <div className='p-4 border-b border-border dark:border-border-dark mb-4'>
                         <div className="flex gap-3">
                             <input
                                 type="text"
@@ -405,10 +405,10 @@ function App() {
                             </button>
                         </div>
                     </div>
-                    <div className={isFullScreen ? 'flex-1 overflow-y-auto p-4' : ''}>
+                    <div className={isFullScreen ? 'flex-1 overflow-y-auto px-4' : ''}>
                         <FieldTable
                             fields={filteredFields}
-                            onToggleField={(idx, sel) => handleToggleFieldName(filteredFields[idx].name, sel)}
+                            onToggleField={(name, sel) => handleToggleFieldName(name, sel)}
                             onToggleAll={handleToggleAll}
                             onUpdateDf={handleUpdateDf}
                         />

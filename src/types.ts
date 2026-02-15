@@ -8,6 +8,22 @@ export interface SalesforceField {
     nillable?: boolean;
     calculated?: boolean;
     custom?: boolean;
+    unique?: boolean;
+    externalId?: boolean;
+    caseSensitive?: boolean;
+    filterable?: boolean;
+    sortable?: boolean;
+    groupable?: boolean;
+    updateable?: boolean;
+    createable?: boolean;
+    htmlFormatted?: boolean;
+    referenceTo?: string[];
+    relationshipName?: string;
+    inlineHelpText?: string;
+    defaultValue?: any;
+    picklistValues?: any[];
+    calculatedFormula?: string;
+
     dfMapping?: {
         mappedDfName?: string;
         manualDf?: {
