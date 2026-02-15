@@ -248,6 +248,8 @@ export class RelationshipService {
         const outgoingEdges = currentEdges.filter(e => e.source === nodeId);
 
         const markForRemoval = (targetId: string) => {
+            if (nodesToRemove.has(targetId)) return; // Prevent infinite recursion for cyclic graphs
+
             const incoming = currentEdges.filter(e => e.target === targetId && !edgesToRemove.has(e.id));
             if (incoming.length <= 1) {
                 nodesToRemove.add(targetId);
