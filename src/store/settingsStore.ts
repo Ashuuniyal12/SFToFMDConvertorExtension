@@ -19,8 +19,8 @@ interface ThemeColors {
 }
 
 const defaultThemeColors: ThemeColors = {
-    primary: '#b346fc',
-    primaryHover: '#8a00db',
+    primary: '#0176d3',
+    primaryHover: '#1b33b3',
     surface: '#F8F9FA',
     surfaceDark: '#1E1E1E',
     textPrimary: '#212529',
@@ -31,7 +31,7 @@ const defaultThemeColors: ThemeColors = {
     borderDark: '#2D2D2D',
     success: '#10B981',
     error: '#dc3545',
-    rowHover: '#8a00db', // Default faint purple
+    rowHover: '#0e9dda', // Default faint purple
 };
 
 interface SettingsState {
