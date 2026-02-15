@@ -274,7 +274,7 @@ export const FieldTable: React.FC<FieldTableProps> = ({ fields, onToggleField, o
                                             </select>
                                         </div>
                                         <div className="flex gap-2">
-                                            <div className="flex flex-col gap-1 w-1/2">
+                                            <div className="flex flex-col gap-1 w-1/3">
                                                 <label className="text-[11px] text-text-secondary dark:text-text-dark-secondary">Length</label>
                                                 <input
                                                     type="number"
@@ -284,13 +284,23 @@ export const FieldTable: React.FC<FieldTableProps> = ({ fields, onToggleField, o
                                                     disabled={!!field.dfMapping?.mappedDfName}
                                                 />
                                             </div>
-                                            <div className="flex flex-col gap-1 w-1/2">
+                                            <div className="flex flex-col gap-1 w-1/3">
                                                 <label className="text-[11px] text-text-secondary dark:text-text-dark-secondary">Prec</label>
                                                 <input
                                                     type="number"
                                                     className={`p-1.5 text-[12px] border border-border dark:border-border-dark rounded bg-white dark:bg-[#1E1E1E] text-text-primary dark:text-text-dark-primary focus:border-primary outline-none ${field.dfMapping?.mappedDfName ? 'opacity-70 bg-gray-100 dark:bg-[#2A2A2A] cursor-not-allowed' : ''}`}
                                                     value={field.dfMapping?.manualDf?.precision || field.precision || 0}
                                                     onChange={(e) => !field.dfMapping?.mappedDfName && onUpdateDf(field.name, { ...field.dfMapping?.manualDf, precision: parseInt(e.target.value) })}
+                                                    disabled={!!field.dfMapping?.mappedDfName}
+                                                />
+                                            </div>
+                                            <div className="flex flex-col gap-1 w-1/3">
+                                                <label className="text-[11px] text-text-secondary dark:text-text-dark-secondary">Scale</label>
+                                                <input
+                                                    type="number"
+                                                    className={`p-1.5 text-[12px] border border-border dark:border-border-dark rounded bg-white dark:bg-[#1E1E1E] text-text-primary dark:text-text-dark-primary focus:border-primary outline-none ${field.dfMapping?.mappedDfName ? 'opacity-70 bg-gray-100 dark:bg-[#2A2A2A] cursor-not-allowed' : ''}`}
+                                                    value={field.dfMapping?.manualDf?.scale ?? field.scale ?? 0}
+                                                    onChange={(e) => !field.dfMapping?.mappedDfName && onUpdateDf(field.name, { ...field.dfMapping?.manualDf, scale: parseInt(e.target.value) })}
                                                     disabled={!!field.dfMapping?.mappedDfName}
                                                 />
                                             </div>
