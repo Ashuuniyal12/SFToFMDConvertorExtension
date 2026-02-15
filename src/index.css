@@ -7,7 +7,28 @@
 @theme {
     --font-sans: 'Inter', sans-serif;
 
-    --color-primary: #b346fcff;
+    --color-primary: var(--color-primary);
+    --color-primary-hover: var(--color-primary-hover);
+
+    --color-surface: var(--color-surface);
+    --color-surface-dark: var(--color-surface-dark);
+
+    --color-border: var(--color-border);
+    --color-border-dark: var(--color-border-dark);
+
+    --color-text-primary: var(--color-text-primary);
+    --color-text-secondary: var(--color-text-secondary);
+
+    --color-text-dark-primary: var(--color-text-dark-primary);
+    --color-text-dark-secondary: var(--color-text-dark-secondary);
+
+    --color-success: var(--color-success);
+    --color-error: var(--color-error);
+    --color-row-hover: var(--color-row-hover);
+}
+
+:root {
+    --color-primary: #b346fc;
     --color-primary-hover: #8a00db;
 
     --color-surface: #F8F9FA;
@@ -24,10 +45,11 @@
 
     --color-success: #10B981;
     --color-error: #dc3545;
+    --color-row-hover: #A100FF;
 }
 
 body {
-    @apply  m-0 p-0 font-sans bg-white text-text-primary transition-colors duration-300 overflow-hidden dark:bg-[#121212] dark:text-text-dark-primary;
+    @apply m-0 p-0 font-sans bg-white text-text-primary transition-colors duration-300 overflow-hidden dark:bg-[#121212] dark:text-text-dark-primary;
 }
 
 /* Scrollbar Customization */

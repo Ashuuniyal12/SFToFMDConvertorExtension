@@ -12,6 +12,7 @@ import { MappingEngine } from './utils/mappingEngine';
 import { ExcelGenerator } from './utils/excelGenerator';
 import { SalesforceField } from './types';
 import './index.css';
+import { useSettingsStore } from './store/settingsStore';
 
 // Lazy load RelationshipGraph to avoid header bloat and ensure fast initial load
 const RelationshipGraph = lazy(() => import('./modules/relationship-graph/components/RelationshipGraph').then(module => ({ default: module.RelationshipGraph })));
@@ -62,6 +63,35 @@ function App() {
             setIsFullScreen(true);
         }
     }, []);
+
+    // Apply Theme Colors & Dimensions from Store
+    const { mobileWidth, mobileHeight, themeColors } = useSettingsStore();
+
+    useEffect(() => {
+        const root = document.documentElement;
+
+        // Apply Colors
+        root.style.setProperty('--color-primary', themeColors.primary);
+        // Calculate hover color if not explicitly set (or just use the store value)
+        root.style.setProperty('--color-primary-hover', themeColors.primaryHover);
+
+        root.style.setProperty('--color-surface', themeColors.surface);
+        root.style.setProperty('--color-surface-dark', themeColors.surfaceDark);
+
+        root.style.setProperty('--color-border', themeColors.border);
+        root.style.setProperty('--color-border-dark', themeColors.borderDark);
+
+        root.style.setProperty('--color-text-primary', themeColors.textPrimary);
+        root.style.setProperty('--color-text-secondary', themeColors.textSecondary);
+
+        root.style.setProperty('--color-text-dark-primary', themeColors.textDarkPrimary);
+        root.style.setProperty('--color-text-dark-secondary', themeColors.textDarkSecondary);
+
+        root.style.setProperty('--color-success', themeColors.success);
+        root.style.setProperty('--color-error', themeColors.error);
+        root.style.setProperty('--color-row-hover', themeColors.rowHover);
+
+    }, [themeColors]);
 
     // -------------------------------------------------------------------------
     // Helper Functions
@@ -377,7 +407,10 @@ function App() {
     };
 
     return (
-        <div className={`flex flex-col bg-white dark:bg-[#121212] overflow-hidden ${isFullScreen ? 'w-full h-screen' : 'w-[600px] h-[550px]'}`}>
+        <div
+            className={`flex flex-col bg-white dark:bg-[#121212] overflow-hidden ${isFullScreen ? 'w-full h-screen' : 'shadow-xl rounded-lg'}`}
+            style={!isFullScreen ? { width: `${mobileWidth}px`, height: `${mobileHeight}px` } : {}}
+        >
             <Header
                 theme={theme}
                 toggleTheme={() => setTheme(t => t === 'light' ? 'dark' : 'light')}
