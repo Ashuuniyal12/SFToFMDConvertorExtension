@@ -89,7 +89,6 @@ function App() {
 
         root.style.setProperty('--color-success', themeColors.success);
         root.style.setProperty('--color-error', themeColors.error);
-        root.style.setProperty('--color-row-hover', themeColors.rowHover);
 
     }, [themeColors]);
 

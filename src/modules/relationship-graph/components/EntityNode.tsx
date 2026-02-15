@@ -10,9 +10,9 @@ const EntityNode = ({ data, selected }: NodeProps<EntityNodeType>) => {
             border border-gray-200 dark:border-[#333]
             rounded-lg shadow-sm w-[250px]
             transition-all duration-300
-            hover:shadow-[0_0_15px_color-mix(in_srgb,var(--color-row-hover),transparent_60%)]
-            hover:border-[var(--color-row-hover)]
-            ${selected ? 'ring-2 ring-[var(--color-row-hover)] shadow-[0_0_15px_color-mix(in_srgb,var(--color-row-hover),transparent_60%)]' : ''}
+            hover:shadow-[0_0_15px_color-mix(in_srgb,var(--color-primary),transparent_60%)]
+            hover:border-[var(--color-primary)]
+            ${selected ? 'ring-2 ring-[var(--color-primary)] shadow-[0_0_15px_color-mix(in_srgb,var(--color-primary),transparent_60%)]' : ''}
         `}>
             {/* Header */}
             <div className="p-3 border-b border-gray-100 dark:border-[#333] flex items-center justify-between">

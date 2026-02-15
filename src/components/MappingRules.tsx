@@ -56,7 +56,7 @@ export const MappingRules: React.FC<MappingRulesProps> = ({ mappingEngine, isFul
                 {/* Body */}
                 <div className="bg-white dark:bg-[#121212]">
                     {Object.keys(mappings).map(sfType => (
-                        <div key={sfType} className="grid grid-cols-2 items-center border-b border-border dark:border-border-dark last:border-b-0 hover:bg-[color-mix(in_srgb,var(--color-row-hover),transparent_90%)]">
+                        <div key={sfType} className="grid grid-cols-2 items-center border-b border-border dark:border-border-dark last:border-b-0 hover:bg-[color-mix(in_srgb,var(--color-primary),transparent_90%)]">
                             <div className="p-2.5 text-text-primary dark:text-text-dark-primary">{sfType}</div>
                             <div className="p-2.5">
                                 <select

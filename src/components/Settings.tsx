@@ -102,19 +102,7 @@ export const Settings: React.FC<SettingsProps> = ({ currentObject, includeSystem
                             </div>
                         </div>
                     ))}
-                    {/* Row Hover Specific */}
-                    <div className="col-span-2 flex items-center justify-between p-2 bg-white dark:bg-[#121212] border border-border dark:border-border-dark rounded">
-                        <span className="text-[11px] text-text-secondary dark:text-text-dark-secondary capitalize">Row Hover / Selection</span>
-                        <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-mono text-text-secondary dark:text-text-dark-secondary">{themeColors.rowHover}</span>
-                            <input
-                                type="color"
-                                className="w-6 h-6 p-0 border-0 rounded cursor-pointer"
-                                value={themeColors.rowHover}
-                                onChange={(e) => setThemeColor('rowHover', e.target.value)}
-                            />
-                        </div>
-                    </div>
+
                 </div>
             </div>
 

@@ -200,7 +200,7 @@ export const FieldTable: React.FC<FieldTableProps> = ({ fields, onToggleField, o
                 {sortedFields.map((field, index) => (
                     <React.Fragment key={`${field.name}-${index}`}>
                         <div
-                            className={`grid items-center border-b border-border dark:border-border-dark last:border-b-0 hover:bg-[color-mix(in_srgb,var(--color-row-hover),transparent_90%)] transition-colors duration-100 ${field.calculated ? 'bg-purple-50/50 dark:bg-purple-900/10' : ''}`}
+                            className={`grid items-center border-b border-border dark:border-border-dark last:border-b-0 hover:bg-[color-mix(in_srgb,var(--color-primary),transparent_90%)] transition-colors duration-100 ${field.calculated ? 'bg-[color-mix(in_srgb,var(--color-primary),transparent_80%)]' : ''}`}
                             style={{ gridTemplateColumns: gridTemplate }}
                         >
                             <div className="flex items-center justify-center p-2">

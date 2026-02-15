@@ -15,7 +15,6 @@ interface ThemeColors {
     borderDark: string;
     success: string;
     error: string;
-    rowHover: string;
 }
 
 const defaultThemeColors: ThemeColors = {
@@ -31,7 +30,6 @@ const defaultThemeColors: ThemeColors = {
     borderDark: '#2D2D2D',
     success: '#10B981',
     error: '#dc3545',
-    rowHover: '#0e9dda', // Default faint purple
 };
 
 interface SettingsState {
