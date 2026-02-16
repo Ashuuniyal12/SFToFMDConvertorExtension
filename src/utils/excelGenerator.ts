@@ -112,7 +112,7 @@ export class ExcelGenerator {
             // Source
             sheet.getCell(`A${currentRow}`).value = field.name;
             sheet.getCell(`B${currentRow}`).value = objectName;
-            sheet.getCell(`C${currentRow}`).value = field.type;
+            sheet.getCell(`C${currentRow}`).value = mapped.sourceType;
             sheet.getCell(`D${currentRow}`).value = field.length || 0;
             sheet.getCell(`E${currentRow}`).value = '';
 

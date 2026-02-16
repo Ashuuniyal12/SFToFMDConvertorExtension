@@ -40,7 +40,52 @@ export const MappingRules: React.FC<MappingRulesProps> = ({ mappingEngine, isFul
 
     if (loading) return <div className="p-6 text-text-secondary dark:text-text-dark-secondary">Loading mappings...</div>;
 
-    const bqTypes = ["STRING", "NUMERIC", "BOOL", "DATE", "TIMESTAMP", "BYTES"];
+    const bqTypes = [
+        "STRING", "BYTES", "INTEGER", "INT64", "FLOAT", "FLOAT64", "NUMERIC", "BIGNUMERIC",
+        "BOOLEAN", "BOOL", "TIMESTAMP", "DATE", "TIME", "DATETIME", "GEOGRAPHY", "JSON", "RECORD", "STRUCT"
+    ];
+
+    const SECTIONS = [
+        {
+            title: "Text Data Types",
+            types: ["string", "textarea", "encryptedstring", "id", "anytype"]
+        },
+        {
+            title: "Number Data Types",
+            types: ["double", "int", "currency", "percent"]
+        },
+        {
+            title: "Date & Time Data Types",
+            types: ["date", "datetime", "time"]
+        },
+        {
+            title: "Contact & URL Types",
+            types: ["email", "phone", "url"]
+        },
+        {
+            title: "Picklist Types",
+            types: ["picklist", "multipicklist", "combobox"]
+        },
+        {
+            title: "Relationship Data Types",
+            types: ["reference"]
+        },
+        {
+            title: "Advanced / Special Types",
+            types: ["boolean", "base64", "address", "location"]
+        }
+    ];
+
+    // Helper to get remaining types not in sections (if any)
+    const allSectionTypes = new Set(SECTIONS.flatMap(s => s.types));
+    const otherTypes = Object.keys(mappings).filter(t => !allSectionTypes.has(t));
+
+    if (otherTypes.length > 0) {
+        SECTIONS.push({
+            title: "Other / Custom Types",
+            types: otherTypes
+        });
+    }
 
     return (
         <div className={`bg-surface dark:bg-[#1E1E1E] rounded-lg shadow-[inset_0_0_0_1px_rgba(233,236,239,1)] dark:shadow-[inset_0_0_0_1px_rgba(45,45,45,1)] ${isFullScreen ? 'h-full p-4 overflow-y-auto' : 'p-6 h-[380px] overflow-y-auto m-3'}`}>
@@ -55,21 +100,31 @@ export const MappingRules: React.FC<MappingRulesProps> = ({ mappingEngine, isFul
 
                 {/* Body */}
                 <div className="bg-white dark:bg-[#121212]">
-                    {Object.keys(mappings).map(sfType => (
-                        <div key={sfType} className="grid grid-cols-2 items-center border-b border-border dark:border-border-dark last:border-b-0 hover:bg-[color-mix(in_srgb,var(--color-primary),transparent_90%)]">
-                            <div className="p-2.5 text-text-primary dark:text-text-dark-primary">{sfType}</div>
-                            <div className="p-2.5">
-                                <select
-                                    className="w-full p-2 border border-border dark:border-border-dark rounded bg-surface dark:bg-[#2D2D2D] text-text-primary dark:text-text-dark-primary text-[13px] outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer"
-                                    value={mappings[sfType]}
-                                    onChange={(e) => handleChange(sfType, e.target.value)}
-                                >
-                                    {bqTypes.map(type => (
-                                        <option key={type} value={type}>{type}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
+                    {SECTIONS.map((section) => (
+                        // Check if section has any mappings available in current state
+                        section.types.some(t => mappings.hasOwnProperty(t)) && (
+                            <React.Fragment key={section.title}>
+                                <div className="px-4 py-2 bg-gray-100 dark:bg-[#2A2A2A] border-y border-border dark:border-border-dark text-xs font-bold text-text-primary dark:text-text-dark-primary uppercase tracking-wide">
+                                    {section.title}
+                                </div>
+                                {section.types.filter(t => mappings.hasOwnProperty(t)).map(sfType => (
+                                    <div key={sfType} className="grid grid-cols-2 items-center border-b border-border dark:border-border-dark last:border-b-0 hover:bg-gray-50 dark:hover:bg-[#1A1A1A] transition-colors">
+                                        <div className="p-2.5 pl-6 text-text-secondary dark:text-text-dark-secondary font-medium">{sfType}</div>
+                                        <div className="p-2.5">
+                                            <select
+                                                className="w-full p-2 border border-border dark:border-border-dark rounded bg-surface dark:bg-[#2D2D2D] text-text-primary dark:text-text-dark-primary text-[13px] outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer hover:border-primary/50 transition-colors"
+                                                value={mappings[sfType]}
+                                                onChange={(e) => handleChange(sfType, e.target.value)}
+                                            >
+                                                {bqTypes.map(type => (
+                                                    <option key={type} value={type}>{type}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+                                ))}
+                            </React.Fragment>
+                        )
                     ))}
                 </div>
             </div>
