@@ -556,3 +556,79 @@ npm run preview
 | **CSS Custom Properties + Zustand** | Enables runtime theme customization without Tailwind rebuild |
 | **BFS graph traversal with caching** | Efficient exploration of SF object relationships; avoids redundant API calls |
 | **DF Formula Field pattern** | Maps formula fields to their data-carrying DF counterparts for BigQuery compatibility |
+| **Parallel permission fetching** | Integration Access permissions are fetched in `Promise.all` alongside existing metadata/DF calls — zero additional latency |
+
+---
+
+## 15. Integration Access Module
+
+Displays **Profile** and **Permission Set** field-level security (FLS) for the current Salesforce object in a dedicated tab.
+
+### 15.1 Purpose
+
+When building integration pipelines, developers need to know which fields are readable/editable by the integration profile and permission set. This module surfaces that information alongside field classification and generates ready-to-paste XML snippets for `*.profile-meta.xml` or `*.permissionset-meta.xml` files.
+
+### 15.2 Target Security Contexts
+
+| Type | Name |
+|---|---|
+| Profile | `DF API - Only Integration Profile` |
+| Permission Set | `DFDatalake` |
+
+### 15.3 SOQL Queries (`salesforceApi.ts`)
+
+```sql
+-- Profile field permissions
+SELECT Field, PermissionsRead, PermissionsEdit
+FROM FieldPermissions
+WHERE Parent.Profile.Name = 'DF API - Only Integration Profile'
+  AND SobjectType = '{objectName}'
+
+-- Permission Set field permissions
+SELECT Field, PermissionsRead, PermissionsEdit
+FROM FieldPermissions
+WHERE Parent.Label = 'DFDatalake'
+  AND Parent.IsOwnedByProfile = false
+  AND SobjectType = '{objectName}'
+```
+
+### 15.4 Component (`IntegrationAccess.tsx`)
+
+| Column | Source | Description |
+|---|---|---|
+| ☐ Checkbox | Local state | Row selection for bulk XML generation |
+| API Name | `field.name` | Monospace font, truncated |
+| Label | `field.label` | Human-readable name |
+| Type | Computed | Badge: `FORMULA` (purple), `ROLLUP` (amber), `CUSTOM` (green), `SYSTEM` (gray) |
+| Required | `!field.nillable` | `REQ` badge — forced `read: true, edit: true` |
+| Profile Read/Edit | SOQL query result | ✓/✗ badge per permission |
+| PermSet Read/Edit | SOQL query result | ✓/✗ badge per permission |
+| XML | Generated | Copy-to-clipboard `<fieldPermissions>` XML snippet |
+
+### 15.5 XML Snippet Format
+
+The XML always uses `editable=false` and `readable=true` regardless of actual permission values:
+
+```xml
+<fieldPermissions>
+    <editable>false</editable>
+    <field>ObjectName.FieldApiName</field>
+    <readable>true</readable>
+</fieldPermissions>
+```
+
+### 15.6 Required Field Override Logic
+
+If `field.nillable === false` (i.e., the field is required), `readable` and `editable` are forced to `true` regardless of the actual API response, since Salesforce always grants FLS on required fields.
+
+### 15.7 Features
+
+- **Comma-separated filter** — enter `Name, Email, Phone` to search multiple fields at once
+- **Row checkboxes + Select All** — select fields for bulk XML generation
+- **Bulk Generate XML modal** — generates `<fieldPermissions>` XML for all selected fields, grouped by Profile and Permission Set, with a "Copy All" button
+- **Per-row XML copy** — one-click copy with visual confirmation (✓ icon for 1.5s)
+- **Sortable columns** — click any header to sort ascending/descending
+- **Footer stats** — total fields, required count, loaded permission counts
+- **Required rows** — highlighted with amber background
+- **CSS variable theming** — uses `var(--color-primary)`, `var(--color-surface)`, etc. for consistent look with user-chosen theme
+

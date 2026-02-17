@@ -7,6 +7,7 @@ import { MappingRules } from './components/MappingRules';
 import { Settings } from './components/Settings';
 import { VirtualFieldModal } from './components/VirtualFieldModal';
 import { ConfirmationModal } from './components/ConfirmationModal';
+import { IntegrationAccess } from './components/IntegrationAccess';
 import { SalesforceApi } from './utils/salesforceApi';
 import { MappingEngine } from './utils/mappingEngine';
 import { ExcelGenerator } from './utils/excelGenerator';
@@ -34,6 +35,11 @@ function App() {
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const [showRefresh, setShowRefresh] = useState(false);
     const [isFullScreen, setIsFullScreen] = useState(false);
+
+    // Integration Access state
+    const [profilePerms, setProfilePerms] = useState<Record<string, { readable: boolean, editable: boolean }>>({});
+    const [permSetPerms, setPermSetPerms] = useState<Record<string, { readable: boolean, editable: boolean }>>({});
+    const [accessLoading, setAccessLoading] = useState(false);
 
     // Instantiations
     const mappingEngine = useMemo(() => new MappingEngine(), []);
@@ -98,11 +104,17 @@ function App() {
 
     const fetchFields = async (api: SalesforceApi, objectName: string) => {
         setStatusMsg("Fetching Metadata...");
+        setAccessLoading(true);
         try {
-            const [metadata, dfMappings] = await Promise.all([
+            const [metadata, dfMappings, profilePermsResult, permSetPermsResult] = await Promise.all([
                 api.describe(objectName),
-                api.getDFMappings(objectName)
+                api.getDFMappings(objectName),
+                api.getProfileFieldPermissions(objectName, 'DF API - Only Integration Profile'),
+                api.getPermSetFieldPermissions(objectName, 'DFDatalake')
             ]);
+
+            setProfilePerms(profilePermsResult);
+            setPermSetPerms(permSetPermsResult);
 
             // First pass: Create initial map with explicit type
             let tempFields: SalesforceField[] = metadata.fields.map(f => ({
@@ -161,9 +173,11 @@ function App() {
 
             setFields(tempFields);
             setStatusMsg(`Loaded ${tempFields.filter(f => !f.hidden).length} visible fields.`);
+            setAccessLoading(false);
         } catch (e: any) {
             console.error(e);
             setStatusMsg(`Error: ${e.message}`);
+            setAccessLoading(false);
         }
     };
 
@@ -458,6 +472,22 @@ function App() {
                     }>
                         <RelationshipGraph api={sfApi} currentObject={currentObject} />
                     </Suspense>
+                </div>
+            )}
+
+            {/* Integration Access Tab */}
+            {activeTab === 'access' && (
+                <div className={`flex-1 min-h-0 flex flex-col ${isFullScreen ? 'm-0 overflow-hidden' : ''}`}>
+                    <IntegrationAccess
+                        fields={fields}
+                        objectName={currentObject || 'Unknown'}
+                        profilePerms={profilePerms}
+                        permSetPerms={permSetPerms}
+                        profileName="DF API - Only Integration Profile"
+                        permSetName="DFDatalake"
+                        isFullScreen={isFullScreen}
+                        loading={accessLoading}
+                    />
                 </div>
             )}
 

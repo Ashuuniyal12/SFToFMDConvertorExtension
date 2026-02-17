@@ -68,6 +68,49 @@ export class SalesforceApi {
         return idOrName;
     }
 
+    async getProfileFieldPermissions(objectName: string, profileName: string): Promise<Record<string, { readable: boolean, editable: boolean }>> {
+        try {
+            const q = `SELECT Field, PermissionsRead, PermissionsEdit FROM FieldPermissions WHERE Parent.Profile.Name = '${profileName}' AND SobjectType = '${objectName}'`;
+            const result = await this.query(q);
+            const perms: Record<string, { readable: boolean, editable: boolean }> = {};
+            if (result.records) {
+                result.records.forEach((rec: any) => {
+                    // Field comes back as "ObjectName.FieldName"
+                    const fieldName = rec.Field?.split('.')?.pop() || rec.Field;
+                    perms[fieldName] = {
+                        readable: !!rec.PermissionsRead,
+                        editable: !!rec.PermissionsEdit
+                    };
+                });
+            }
+            return perms;
+        } catch (e) {
+            console.warn("Failed to fetch profile field permissions", e);
+            return {};
+        }
+    }
+
+    async getPermSetFieldPermissions(objectName: string, permSetLabel: string): Promise<Record<string, { readable: boolean, editable: boolean }>> {
+        try {
+            const q = `SELECT Field, PermissionsRead, PermissionsEdit FROM FieldPermissions WHERE Parent.Label = '${permSetLabel}' AND Parent.IsOwnedByProfile = false AND SobjectType = '${objectName}'`;
+            const result = await this.query(q);
+            const perms: Record<string, { readable: boolean, editable: boolean }> = {};
+            if (result.records) {
+                result.records.forEach((rec: any) => {
+                    const fieldName = rec.Field?.split('.')?.pop() || rec.Field;
+                    perms[fieldName] = {
+                        readable: !!rec.PermissionsRead,
+                        editable: !!rec.PermissionsEdit
+                    };
+                });
+            }
+            return perms;
+        } catch (e) {
+            console.warn("Failed to fetch permission set field permissions", e);
+            return {};
+        }
+    }
+
     async getDFMappings(objectName: string): Promise<Record<string, string>> {
         try {
             const q = `SELECT Additional_Field_for_FF__c, Formula_Field_API_Name__c FROM DF_Formula_Field_Mapping__mdt WHERE Object_API_name__c = '${objectName}'`;
