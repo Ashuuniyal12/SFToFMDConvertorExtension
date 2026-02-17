@@ -49,8 +49,17 @@ export const IntegrationAccess: React.FC<IntegrationAccessProps> = ({
     const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set());
     const [showXmlModal, setShowXmlModal] = useState(false);
     const [xmlCopied, setXmlCopied] = useState(false);
+    const [xmlTab, setXmlTab] = useState<'profile' | 'permset'>('profile');
 
-    const visibleFields = fields.filter(f => !f.hidden);
+    // Build map of hidden DF fields keyed by their name
+    const hiddenFieldMap = useMemo(() => {
+        const map: Record<string, SalesforceField> = {};
+        fields.filter(f => f.hidden).forEach(f => { map[f.name] = f; });
+        return map;
+    }, [fields]);
+
+    // Main list: non-hidden fields only (hidden ones render as sub-rows)
+    const mainFields = useMemo(() => fields.filter(f => !f.hidden), [fields]);
 
     const getEffectivePerms = (field: SalesforceField, perms: Record<string, FieldPermission>) => {
         const isRequired = !field.nillable;
@@ -65,7 +74,7 @@ export const IntegrationAccess: React.FC<IntegrationAccessProps> = ({
     };
 
     const generateFieldXml = (field: SalesforceField): string => {
-        return `<fieldPermissions>\n    <editable>false</editable>\n    <field>${objectName}.${field.name}</field>\n    <readable>true</readable>\n</fieldPermissions>`;
+        return `<fieldPermissions>\n\t<editable>false</editable>\n\t<field>${objectName}.${field.name}</field>\n\t<readable>true</readable>\n</fieldPermissions>`;
     };
 
     const copyFieldXml = (field: SalesforceField) => {
@@ -76,22 +85,34 @@ export const IntegrationAccess: React.FC<IntegrationAccessProps> = ({
         });
     };
 
-    const generateBulkXml = (): string => {
+    // For bulk XML: if a formula field has a DF counterpart, use DF only
+    const resolveXmlFields = (): SalesforceField[] => {
         const selected = sortedFields.filter(f => selectedFields.has(f.name));
-        if (selected.length === 0) return '';
+        return selected.map(f => {
+            const dfName = f.dfMapping?.mappedDfName;
+            if (dfName && hiddenFieldMap[dfName]) return hiddenFieldMap[dfName];
+            return f;
+        });
+    };
 
-        const profileXml = `<!-- Profile: ${profileName} -->\n` +
-            selected.map(f => generateFieldXml(f)).join('\n\n');
-
-        const permSetXml = `<!-- Permission Set: ${permSetName} -->\n` +
-            selected.map(f => generateFieldXml(f)).join('\n\n');
-
-        return `${profileXml}\n\n${'─'.repeat(60)}\n\n${permSetXml}`;
+    const generateBulkXml = (tab: 'profile' | 'permset'): string => {
+        const xmlFields = resolveXmlFields();
+        if (xmlFields.length === 0) return '';
+        const label = tab === 'profile' ? `Profile: ${profileName}` : `Permission Set: ${permSetName}`;
+        return `<!-- ${label} -->\n` + xmlFields.map(f => generateFieldXml(f)).join('\n');
     };
 
     const copyBulkXml = () => {
-        const xml = generateBulkXml();
+        const xml = generateBulkXml(xmlTab);
         navigator.clipboard.writeText(xml).then(() => {
+            setXmlCopied(true);
+            setTimeout(() => setXmlCopied(false), 2000);
+        });
+    };
+
+    const copyAllXml = () => {
+        const both = generateBulkXml('profile') + '\n\n' + generateBulkXml('permset');
+        navigator.clipboard.writeText(both).then(() => {
             setXmlCopied(true);
             setTimeout(() => setXmlCopied(false), 2000);
         });
@@ -112,15 +133,15 @@ export const IntegrationAccess: React.FC<IntegrationAccessProps> = ({
             .map(t => t.trim().toLowerCase())
             .filter(t => t.length > 0);
 
-        if (tokens.length === 0) return visibleFields;
+        if (tokens.length === 0) return mainFields;
 
-        return visibleFields.filter(f =>
+        return mainFields.filter(f =>
             tokens.some(token =>
                 f.name.toLowerCase().includes(token) ||
                 f.label.toLowerCase().includes(token)
             )
         );
-    }, [filter, visibleFields]);
+    }, [filter, mainFields]);
 
     const sortedFields = useMemo(() => {
         return [...filteredFields].sort((a, b) => {
@@ -276,64 +297,128 @@ export const IntegrationAccess: React.FC<IntegrationAccessProps> = ({
                                 const profileEff = getEffectivePerms(field, profilePerms);
                                 const permSetEff = getEffectivePerms(field, permSetPerms);
 
+                                // Find hidden DF sub-field for formula fields
+                                const dfName = field.dfMapping?.mappedDfName;
+                                const dfField = dfName ? hiddenFieldMap[dfName] : null;
+
                                 return (
-                                    <tr
-                                        key={`${field.name}-${idx}`}
-                                        className={`border-b border-[var(--color-border)] dark:border-[var(--color-border-dark)] last:border-b-0 hover:bg-[color-mix(in_srgb,var(--color-primary),transparent_92%)] transition-colors duration-100 ${isRequired ? 'bg-amber-50/30 dark:bg-amber-900/5' : ''}`}
-                                    >
-                                        <td className="p-2 text-center">
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedFields.has(field.name)}
-                                                onChange={() => toggleField(field.name)}
-                                                className="accent-[var(--color-primary)] w-3.5 h-3.5 cursor-pointer"
-                                            />
-                                        </td>
-                                        <td className="p-2.5 font-medium text-[var(--color-text-primary)] dark:text-[var(--color-text-dark-primary)] font-mono text-[11px] truncate max-w-[180px]" title={field.name}>
-                                            {field.name}
-                                        </td>
-                                        <td className="p-2.5 text-[var(--color-text-secondary)] dark:text-[var(--color-text-dark-secondary)] truncate max-w-[150px]" title={field.label}>
-                                            {field.label}
-                                        </td>
-                                        <td className="p-2.5">
-                                            <span className={`inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold border ${getCategoryStyle(category)}`}>
-                                                {category}
-                                            </span>
-                                        </td>
-                                        <td className="p-2.5 text-center">
-                                            {isRequired ? (
-                                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
-                                                    REQ
+                                    <React.Fragment key={`${field.name}-${idx}`}>
+                                        <tr
+                                            className={`border-b border-[var(--color-border)] dark:border-[var(--color-border-dark)] last:border-b-0 hover:bg-[color-mix(in_srgb,var(--color-primary),transparent_92%)] transition-colors duration-100 ${isRequired ? 'bg-amber-50/30 dark:bg-amber-900/5' : ''}`}
+                                        >
+                                            <td className="p-2 text-center">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedFields.has(field.name)}
+                                                    onChange={() => toggleField(field.name)}
+                                                    className="accent-[var(--color-primary)] w-3.5 h-3.5 cursor-pointer"
+                                                />
+                                            </td>
+                                            <td className="p-2.5 font-medium text-[var(--color-text-primary)] dark:text-[var(--color-text-dark-primary)] font-mono text-[11px] truncate max-w-[180px]" title={field.name}>
+                                                {field.name}
+                                            </td>
+                                            <td className="p-2.5 text-[var(--color-text-secondary)] dark:text-[var(--color-text-dark-secondary)] truncate max-w-[150px]" title={field.label}>
+                                                {field.label}
+                                            </td>
+                                            <td className="p-2.5">
+                                                <span className={`inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold border ${getCategoryStyle(category)}`}>
+                                                    {category}
                                                 </span>
-                                            ) : (
-                                                <span className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-dark-secondary)] text-[10px]">—</span>
-                                            )}
-                                        </td>
-                                        <td className="p-2.5 text-center border-l border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
-                                            <PermBadge value={profileEff.readable} />
-                                        </td>
-                                        <td className="p-2.5 text-center">
-                                            <PermBadge value={profileEff.editable} />
-                                        </td>
-                                        <td className="p-2.5 text-center border-l border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
-                                            <PermBadge value={permSetEff.readable} />
-                                        </td>
-                                        <td className="p-2.5 text-center">
-                                            <PermBadge value={permSetEff.editable} />
-                                        </td>
-                                        <td className="p-2.5 text-center border-l border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
-                                            <button
-                                                onClick={() => copyFieldXml(field)}
-                                                className="p-1.5 rounded hover:bg-[color-mix(in_srgb,var(--color-primary),transparent_85%)] text-[var(--color-text-secondary)] dark:text-[var(--color-text-dark-secondary)] transition-colors"
-                                                title={generateFieldXml(field)}
-                                            >
-                                                {copiedField === field.name
-                                                    ? <Check size={14} className="text-green-500" />
-                                                    : <Copy size={14} />
-                                                }
-                                            </button>
-                                        </td>
-                                    </tr>
+                                            </td>
+                                            <td className="p-2.5 text-center">
+                                                {isRequired ? (
+                                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                                                        REQ
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-dark-secondary)] text-[10px]">—</span>
+                                                )}
+                                            </td>
+                                            <td className="p-2.5 text-center border-l border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
+                                                <PermBadge value={profileEff.readable} />
+                                            </td>
+                                            <td className="p-2.5 text-center">
+                                                <PermBadge value={profileEff.editable} />
+                                            </td>
+                                            <td className="p-2.5 text-center border-l border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
+                                                <PermBadge value={permSetEff.readable} />
+                                            </td>
+                                            <td className="p-2.5 text-center">
+                                                <PermBadge value={permSetEff.editable} />
+                                            </td>
+                                            <td className="p-2.5 text-center border-l border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
+                                                <button
+                                                    onClick={() => copyFieldXml(field)}
+                                                    className="p-1.5 rounded hover:bg-[color-mix(in_srgb,var(--color-primary),transparent_85%)] text-[var(--color-text-secondary)] dark:text-[var(--color-text-dark-secondary)] transition-colors"
+                                                    title={generateFieldXml(field)}
+                                                >
+                                                    {copiedField === field.name
+                                                        ? <Check size={14} className="text-green-500" />
+                                                        : <Copy size={14} />
+                                                    }
+                                                </button>
+                                            </td>
+                                        </tr>
+
+                                        {/* Hidden DF sub-row for formula fields */}
+                                        {dfField && (() => {
+                                            const dfProfileEff = getEffectivePerms(dfField, profilePerms);
+                                            const dfPermSetEff = getEffectivePerms(dfField, permSetPerms);
+                                            const dfRequired = !dfField.nillable;
+                                            return (
+                                                <tr className="border-b border-[var(--color-border)] dark:border-[var(--color-border-dark)] bg-purple-50/40 dark:bg-purple-900/5">
+                                                    <td className="p-2 text-center">
+                                                        {/* No checkbox for DF sub-row — included via parent */}
+                                                    </td>
+                                                    <td className="p-2.5 font-mono text-[11px] truncate max-w-[180px]" title={dfField.name}>
+                                                        <span className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-dark-secondary)] flex items-center gap-1">
+                                                            <span className="text-purple-400 dark:text-purple-500">└─</span>
+                                                            {dfField.name}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-2.5 text-[var(--color-text-secondary)] dark:text-[var(--color-text-dark-secondary)] truncate max-w-[150px] text-[11px]" title={dfField.label}>
+                                                        {dfField.label}
+                                                    </td>
+                                                    <td className="p-2.5">
+                                                        <span className="inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold border bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400 border-purple-200 dark:border-purple-700">
+                                                            DF
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-2.5 text-center">
+                                                        {dfRequired ? (
+                                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800">REQ</span>
+                                                        ) : (
+                                                            <span className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-dark-secondary)] text-[10px]">—</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="p-2.5 text-center border-l border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
+                                                        <PermBadge value={dfProfileEff.readable} />
+                                                    </td>
+                                                    <td className="p-2.5 text-center">
+                                                        <PermBadge value={dfProfileEff.editable} />
+                                                    </td>
+                                                    <td className="p-2.5 text-center border-l border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
+                                                        <PermBadge value={dfPermSetEff.readable} />
+                                                    </td>
+                                                    <td className="p-2.5 text-center">
+                                                        <PermBadge value={dfPermSetEff.editable} />
+                                                    </td>
+                                                    <td className="p-2.5 text-center border-l border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
+                                                        <button
+                                                            onClick={() => copyFieldXml(dfField)}
+                                                            className="p-1.5 rounded hover:bg-[color-mix(in_srgb,var(--color-primary),transparent_85%)] text-[var(--color-text-secondary)] dark:text-[var(--color-text-dark-secondary)] transition-colors"
+                                                            title={generateFieldXml(dfField)}
+                                                        >
+                                                            {copiedField === dfField.name
+                                                                ? <Check size={14} className="text-green-500" />
+                                                                : <Copy size={14} />
+                                                            }
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })()}
+                                    </React.Fragment>
                                 );
                             })}
                             {sortedFields.length === 0 && (
@@ -399,7 +484,14 @@ export const IntegrationAccess: React.FC<IntegrationAccessProps> = ({
                                     className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-primary)] text-white rounded-md text-[11px] font-semibold hover:bg-[var(--color-primary-hover)] transition-colors"
                                 >
                                     {xmlCopied ? <Check size={13} /> : <Copy size={13} />}
-                                    {xmlCopied ? 'Copied!' : 'Copy All'}
+                                    {xmlCopied ? 'Copied!' : 'Copy Tab'}
+                                </button>
+                                <button
+                                    onClick={copyAllXml}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-primary)] text-white rounded-md text-[11px] font-semibold hover:bg-[var(--color-primary-hover)] transition-colors"
+                                >
+                                    {xmlCopied ? <Check size={13} /> : <Copy size={13} />}
+                                    Copy Both
                                 </button>
                                 <button
                                     onClick={() => setShowXmlModal(false)}
@@ -409,10 +501,31 @@ export const IntegrationAccess: React.FC<IntegrationAccessProps> = ({
                                 </button>
                             </div>
                         </div>
+                        {/* Tabs */}
+                        <div className="flex border-b border-[var(--color-border)] dark:border-[var(--color-border-dark)] shrink-0">
+                            <button
+                                onClick={() => setXmlTab('profile')}
+                                className={`flex-1 py-2.5 text-[11px] font-semibold transition-colors ${xmlTab === 'profile'
+                                    ? 'text-[var(--color-primary)] border-b-2 border-[var(--color-primary)] bg-[color-mix(in_srgb,var(--color-primary),transparent_95%)]'
+                                    : 'text-[var(--color-text-secondary)] dark:text-[var(--color-text-dark-secondary)] hover:bg-gray-100 dark:hover:bg-[#2A2A2A]'
+                                    }`}
+                            >
+                                Profile
+                            </button>
+                            <button
+                                onClick={() => setXmlTab('permset')}
+                                className={`flex-1 py-2.5 text-[11px] font-semibold transition-colors ${xmlTab === 'permset'
+                                    ? 'text-[var(--color-primary)] border-b-2 border-[var(--color-primary)] bg-[color-mix(in_srgb,var(--color-primary),transparent_95%)]'
+                                    : 'text-[var(--color-text-secondary)] dark:text-[var(--color-text-dark-secondary)] hover:bg-gray-100 dark:hover:bg-[#2A2A2A]'
+                                    }`}
+                            >
+                                Permission Set
+                            </button>
+                        </div>
                         {/* Modal Body */}
                         <div className="flex-1 overflow-auto p-4 min-h-0">
                             <pre className="text-[11px] font-mono leading-relaxed text-[var(--color-text-primary)] dark:text-[var(--color-text-dark-primary)] bg-gray-50 dark:bg-[#121212] rounded-lg p-4 border border-[var(--color-border)] dark:border-[var(--color-border-dark)] whitespace-pre-wrap break-all">
-                                {generateBulkXml()}
+                                {generateBulkXml(xmlTab)}
                             </pre>
                         </div>
                     </div>
