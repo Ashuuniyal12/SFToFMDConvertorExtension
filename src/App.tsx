@@ -27,7 +27,6 @@ function App() {
     const [currentObject, setCurrentObject] = useState<string | null>(null);
     const [fields, setFields] = useState<SalesforceField[]>([]);
     const [filter, setFilter] = useState('');
-    const [includeSystemFields, setIncludeSystemFields] = useState(false);
     const [poc, setPoc] = useState('');
     const [sfApi, setSfApi] = useState<SalesforceApi | null>(null);
 
@@ -71,7 +70,7 @@ function App() {
     }, []);
 
     // Apply Theme Colors & Dimensions from Store
-    const { mobileWidth, mobileHeight, themeColors } = useSettingsStore();
+    const { mobileWidth, mobileHeight, themeColors, integrationProfileName, integrationPermSetName } = useSettingsStore();
 
     useEffect(() => {
         const root = document.documentElement;
@@ -109,8 +108,8 @@ function App() {
             const [metadata, dfMappings, profilePermsResult, permSetPermsResult] = await Promise.all([
                 api.describe(objectName),
                 api.getDFMappings(objectName),
-                api.getProfileFieldPermissions(objectName, 'DF API - Only Integration Profile'),
-                api.getPermSetFieldPermissions(objectName, 'DF Datalake')
+                api.getProfileFieldPermissions(objectName, integrationProfileName),
+                api.getPermSetFieldPermissions(objectName, integrationPermSetName)
             ]);
 
             setProfilePerms(profilePermsResult);
@@ -483,8 +482,8 @@ function App() {
                         objectName={currentObject || 'Unknown'}
                         profilePerms={profilePerms}
                         permSetPerms={permSetPerms}
-                        profileName="DF API - Only Integration Profile"
-                        permSetName="DF Datalake"
+                        profileName={integrationProfileName}
+                        permSetName={integrationPermSetName}
                         isFullScreen={isFullScreen}
                         loading={accessLoading}
                     />
@@ -504,8 +503,6 @@ function App() {
                     <div className={isFullScreen ? 'w-full max-w-5xl' : 'w-full'}>
                         <Settings
                             currentObject={currentObject}
-                            includeSystemFields={includeSystemFields}
-                            setIncludeSystemFields={setIncludeSystemFields}
                             poc={poc}
                             setPoc={setPoc}
                             isFullScreen={isFullScreen}

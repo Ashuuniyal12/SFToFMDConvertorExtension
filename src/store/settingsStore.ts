@@ -36,9 +36,13 @@ interface SettingsState {
     mobileWidth: number;
     mobileHeight: number;
     themeColors: ThemeColors;
+    integrationProfileName: string;
+    integrationPermSetName: string;
     setMobileWidth: (width: number) => void;
     setMobileHeight: (height: number) => void;
     setThemeColor: (key: keyof ThemeColors, value: string) => void;
+    setIntegrationProfileName: (name: string) => void;
+    setIntegrationPermSetName: (name: string) => void;
     resetSettings: () => void;
 }
 
@@ -48,6 +52,8 @@ export const useSettingsStore = create<SettingsState>()(
             mobileWidth: 600,
             mobileHeight: 550,
             themeColors: { ...defaultThemeColors },
+            integrationProfileName: 'DF API - Only Integration Profile',
+            integrationPermSetName: 'DF Datalake',
             setMobileWidth: (width) => set({ mobileWidth: width }),
             setMobileHeight: (height) => set({ mobileHeight: height }),
             setThemeColor: (key, value) =>
@@ -57,11 +63,15 @@ export const useSettingsStore = create<SettingsState>()(
                         [key]: value,
                     },
                 })),
+            setIntegrationProfileName: (name) => set({ integrationProfileName: name }),
+            setIntegrationPermSetName: (name) => set({ integrationPermSetName: name }),
             resetSettings: () =>
                 set({
                     mobileWidth: 600,
                     mobileHeight: 550,
                     themeColors: { ...defaultThemeColors },
+                    integrationProfileName: 'DF API - Only Integration Profile',
+                    integrationPermSetName: 'DF Datalake',
                 }),
         }),
         {

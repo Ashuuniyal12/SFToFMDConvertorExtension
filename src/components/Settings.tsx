@@ -3,18 +3,18 @@ import { useSettingsStore } from '../store/settingsStore';
 
 interface SettingsProps {
     currentObject: string | null;
-    includeSystemFields: boolean;
-    setIncludeSystemFields: (val: boolean) => void;
     poc: string;
     setPoc: (val: string) => void;
     isFullScreen: boolean;
 }
 
-export const Settings: React.FC<SettingsProps> = ({ currentObject, includeSystemFields, setIncludeSystemFields, poc, setPoc, isFullScreen }) => {
+export const Settings: React.FC<SettingsProps> = ({ currentObject, poc, setPoc, isFullScreen }) => {
     const {
         mobileWidth, setMobileWidth,
         mobileHeight, setMobileHeight,
         themeColors, setThemeColor,
+        integrationProfileName, setIntegrationProfileName,
+        integrationPermSetName, setIntegrationPermSetName,
         resetSettings
     } = useSettingsStore();
 
@@ -64,14 +64,36 @@ export const Settings: React.FC<SettingsProps> = ({ currentObject, includeSystem
                                 onChange={(e) => setPoc(e.target.value)}
                             />
                         </div>
+                    </div>
+                </section>
 
-                        <label className="flex items-center justify-between cursor-pointer group">
-                            <span className="text-[13px] font-medium text-text-primary dark:text-text-dark-primary group-hover:text-primary transition-colors">Include System Fields</span>
-                            <div className="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" className="sr-only peer" checked={includeSystemFields} onChange={(e) => setIncludeSystemFields(e.target.checked)} />
-                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/20 dark:peer-focus:ring-primary/30 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
-                            </div>
-                        </label>
+                {/* Integration Access Settings */}
+                <section>
+                    <h4 className="text-sm font-semibold text-text-primary dark:text-text-dark-primary mb-3 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" /></svg>
+                        Field Access
+                    </h4>
+                    <div className="p-4 bg-white dark:bg-[#121212] border border-border dark:border-border-dark rounded-xl shadow-sm space-y-4">
+                        <div>
+                            <label className="block text-[12px] font-medium text-text-secondary dark:text-text-dark-secondary mb-1.5">Profile Name</label>
+                            <input
+                                type="text"
+                                className="w-full p-2.5 bg-gray-50 dark:bg-[#1a1a1a] border border-border dark:border-border-dark rounded-lg text-[13px] text-text-primary dark:text-text-dark-primary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all placeholder:text-gray-400"
+                                placeholder="e.g. DF API - Only Integration Profile"
+                                value={integrationProfileName}
+                                onChange={(e) => setIntegrationProfileName(e.target.value)}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[12px] font-medium text-text-secondary dark:text-text-dark-secondary mb-1.5">Permission Set Name</label>
+                            <input
+                                type="text"
+                                className="w-full p-2.5 bg-gray-50 dark:bg-[#1a1a1a] border border-border dark:border-border-dark rounded-lg text-[13px] text-text-primary dark:text-text-dark-primary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all placeholder:text-gray-400"
+                                placeholder="e.g. DF Datalake"
+                                value={integrationPermSetName}
+                                onChange={(e) => setIntegrationPermSetName(e.target.value)}
+                            />
+                        </div>
                     </div>
                 </section>
 

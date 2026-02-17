@@ -224,7 +224,7 @@ export const IntegrationAccess: React.FC<IntegrationAccessProps> = ({
                                 Profile: {profileName}
                             </span>
                             <span className="px-2 py-1 rounded bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 font-medium border border-teal-200 dark:border-teal-800">
-                                PermSet: {permSetName}
+                                Permission Set: {permSetName}
                             </span>
                         </div>
                     </div>
