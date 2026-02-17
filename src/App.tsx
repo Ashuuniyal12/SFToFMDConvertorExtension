@@ -110,7 +110,7 @@ function App() {
                 api.describe(objectName),
                 api.getDFMappings(objectName),
                 api.getProfileFieldPermissions(objectName, 'DF API - Only Integration Profile'),
-                api.getPermSetFieldPermissions(objectName, 'DFDatalake')
+                api.getPermSetFieldPermissions(objectName, 'DF Datalake')
             ]);
 
             setProfilePerms(profilePermsResult);
@@ -484,7 +484,7 @@ function App() {
                         profilePerms={profilePerms}
                         permSetPerms={permSetPerms}
                         profileName="DF API - Only Integration Profile"
-                        permSetName="DFDatalake"
+                        permSetName="DF Datalake"
                         isFullScreen={isFullScreen}
                         loading={accessLoading}
                     />
