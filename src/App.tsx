@@ -120,21 +120,26 @@ function App() {
                 ...f,
                 selected: true,
                 dfMapping: {
-                    mappedDfName: dfMappings[f.name],
+                    mappedDfName: f.calculated ? dfMappings[f.name] : undefined,
                     manualDf: undefined
                 }
             }));
 
+            // console.log('tempFields',tempFields);
+
             // Second pass: Link DFs and Hide them
             const fieldsByName = new Map(tempFields.map(f => [f.name, f]));
+
+            // console.log('fieldsByName',fieldsByName);
 
             tempFields = tempFields.map(f => {
                 if (f.calculated && f.dfMapping?.mappedDfName) {
                     const dfField = fieldsByName.get(f.dfMapping.mappedDfName);
+
+                    // if df present in current object itself 
                     if (dfField) {
                         // Mark DF field as hidden
                         dfField.hidden = true;
-
                         // Populate details into manualDf for display
                         return {
                             ...f,
@@ -147,6 +152,23 @@ function App() {
                                     length: dfField.length,
                                     precision: dfField.precision,
                                     scale: dfField.scale
+                                }
+                            }
+                        };
+                    }
+                    //else df are not present in current object itself but in proxy object 
+                    else{
+                        return {
+                            ...f,
+                            dfMapping: {
+                                ...f.dfMapping,
+                                manualDf: {
+                                    label: `DF ${f.label}`,
+                                    name: f.dfMapping.mappedDfName,
+                                    type: f.type,
+                                    length: f.length,
+                                    precision: f.precision,
+                                    scale: f.scale
                                 }
                             }
                         };
@@ -245,8 +267,7 @@ function App() {
 
     const executeGenerate = async () => {
         setIsConfirmModalOpen(false);
-        const fieldsWithDFDetailsandNormalFields = setFieldForFinalExport(fields);
-
+        const fieldsWithDFDetailsandNormalFields = setFieldForFinalExport(fields);   
         // Prepare fields with DF logic
         const finalFields = fieldsWithDFDetailsandNormalFields.map(f => {
             if (f.calculated) {
@@ -273,7 +294,7 @@ function App() {
             return f;
         });
 
-        console.log("the final fields are ->", finalFields);
+        // console.log("the final fields are ->", finalFields);
 
 
         setStatusMsg("Generating Excel...");
