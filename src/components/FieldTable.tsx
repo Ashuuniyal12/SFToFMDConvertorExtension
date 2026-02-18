@@ -97,6 +97,18 @@ export const FieldTable: React.FC<FieldTableProps> = ({ fields, onToggleField, o
         return parts.join(' ');
     };
 
+    const showprecision=(field:SalesforceField)=>{
+        if (['double', 'currency', 'percent', 'int'].includes(field.type)) {
+            const p = field.precision !== undefined ? field.precision : 18;
+            const s = field.scale !== undefined ? field.scale : 0;
+            // User wants (IntegerPart, Scale) where IntegerPart = Precision - Scale
+            // Ensure p >= s
+            const integerPart = (p >= s) ? (p - s) : p;
+            return `${field.type}(${integerPart},${s})`;
+        }
+        return field.type;
+    }
+
     const gridTemplate = getGridTemplate();
 
     const SortIcon = ({ column }: { column: ColumnId }) => {
@@ -109,7 +121,7 @@ export const FieldTable: React.FC<FieldTableProps> = ({ fields, onToggleField, o
         switch (colId) {
             case 'name': return <div className="p-2.5 truncate text-text-primary dark:text-text-dark-primary font-medium" title={field.name}>{field.name}</div>;
             case 'label': return <div className="p-2.5 truncate text-text-secondary dark:text-text-dark-secondary" title={field.label}>{field.label}</div>;
-            case 'type': return <div className="p-2.5 truncate text-text-primary dark:text-text-dark-primary"><span className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-[11px] font-mono">{field.type}</span></div>;
+            case 'type': return <div className="p-2.5 truncate text-text-primary dark:text-text-dark-primary"><span className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-[11px] font-mono">{showprecision(field)}</span></div>;
             case 'length': return <div className="p-2.5 truncate text-text-primary dark:text-text-dark-primary">{field.length || '-'}</div>;
             case 'precision': return <div className="p-2.5 truncate text-text-primary dark:text-text-dark-primary">{field.precision || '-'}</div>;
             case 'scale': return <div className="p-2.5 truncate text-text-primary dark:text-text-dark-primary">{field.scale || '-'}</div>;
