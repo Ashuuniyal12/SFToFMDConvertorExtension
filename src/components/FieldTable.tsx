@@ -127,8 +127,10 @@ export const FieldTable: React.FC<FieldTableProps> = ({ fields, onToggleField, o
             case 'scale': return <div className="p-2.5 truncate text-text-primary dark:text-text-dark-primary">{field.scale || '-'}</div>;
             case 'attributes': return (
                 <div className="p-2.5 flex items-center gap-1.5 scrollbar-hide overflow-x-auto">
-                    {field.calculated ? (
+                    {field.calculated && field.calculatedFormula != undefined && field.calculatedFormula != ''? (
                         <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border border-purple-200 dark:border-purple-800">FORMULA</span>
+                    ) :field.calculated ? (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border border-orange-200 dark:border-orange-800">ROLL UP</span>
                     ) : field.custom ? (
                         <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800">CUSTOM</span>
                     ) : (
@@ -212,7 +214,7 @@ export const FieldTable: React.FC<FieldTableProps> = ({ fields, onToggleField, o
                 {sortedFields.map((field, index) => (
                     <React.Fragment key={`${field.name}-${index}`}>
                         <div
-                            className={`grid items-center border-b border-border dark:border-border-dark last:border-b-0 hover:bg-[color-mix(in_srgb,var(--color-primary),transparent_90%)] transition-colors duration-100 ${field.calculated ? 'bg-[color-mix(in_srgb,var(--color-primary),transparent_80%)]' : ''}`}
+                            className={`grid items-center border-b border-border dark:border-border-dark last:border-b-0 hover:bg-[color-mix(in_srgb,var(--color-primary),transparent_90%)] transition-colors duration-100 ${field.calculated && field.calculatedFormula != undefined && field.calculatedFormula != ''? 'bg-[color-mix(in_srgb,var(--color-primary),transparent_80%)]' : ''}`}
                             style={{ gridTemplateColumns: gridTemplate }}
                         >
                             <div className="flex items-center justify-center p-2">
@@ -232,7 +234,7 @@ export const FieldTable: React.FC<FieldTableProps> = ({ fields, onToggleField, o
                         </div>
 
                         {/* DF Mapping Row for Formula Fields */}
-                        {field.calculated && field.selected && (
+                        {field.calculated && field.calculatedFormula != undefined && field.calculatedFormula != '' && field.selected && (
                             <div className="col-span-full bg-gray-50 dark:bg-[#252525] p-3 pl-14 border-b border-border dark:border-border-dark animate-in slide-in-from-top-2 duration-200">
                                 <div className="flex flex-col gap-2">
                                     <div className="text-[11px] font-semibold text-text-secondary dark:text-text-dark-secondary uppercase tracking-wider flex items-center gap-2">

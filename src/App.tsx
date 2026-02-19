@@ -133,7 +133,7 @@ function App() {
             // console.log('fieldsByName',fieldsByName);
 
             tempFields = tempFields.map(f => {
-                if (f.calculated && f.dfMapping?.mappedDfName) {
+                if (f.calculated && f.calculatedFormula != undefined && f.calculatedFormula != '' && f.dfMapping?.mappedDfName) {
                     const dfField = fieldsByName.get(f.dfMapping.mappedDfName);
 
                     // if df present in current object itself 
@@ -173,7 +173,7 @@ function App() {
                             }
                         };
                     }
-                } else if (f.calculated && !f.dfMapping?.mappedDfName) {
+                } else if (f.calculated && f.calculatedFormula != undefined && f.calculatedFormula != '' &&!f.dfMapping?.mappedDfName) {
                     return {
                         ...f,
                         dfMapping: {
@@ -249,7 +249,7 @@ function App() {
     const setFieldForFinalExport = (fields: SalesforceField[]) => {
         const selected = fields.filter(f => f.selected && !f.hidden);
         const normalFieldsAndOnlyDFdetailsforFormulaFields = selected.map(f => {
-            if (f.calculated && f.dfMapping?.manualDf != undefined) {
+            if (f.calculated && f.calculatedFormula != undefined && f.calculatedFormula != '' && f.dfMapping?.manualDf != undefined) {
                 return {
                     ...f,
                     label: f.dfMapping?.manualDf?.label || f.label,
@@ -270,7 +270,7 @@ function App() {
         const fieldsWithDFDetailsandNormalFields = setFieldForFinalExport(fields);   
         // Prepare fields with DF logic
         const finalFields = fieldsWithDFDetailsandNormalFields.map(f => {
-            if (f.calculated) {
+            if (f.calculated && f.calculatedFormula != undefined && f.calculatedFormula != '') {
                 if (f.dfMapping?.mappedDfName) {
                     // Try to find the DF field in the full list
                     const dfField = fields.find(field => field.name === f.dfMapping?.mappedDfName);
