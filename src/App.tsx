@@ -350,7 +350,9 @@ function App() {
             }
 
             const urlStr = targetTab.url;
-            const isSalesforcePage = urlStr.includes('salesforce.com') || urlStr.includes('force.com');
+            const isSalesforcePage = urlStr.includes('salesforce.com') ||
+                urlStr.includes('force.com') ||
+                urlStr.includes('salesforce-setup.com');
 
             if (!isSalesforcePage) {
                 const msg = "Not a Salesforce Domain.";
