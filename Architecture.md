@@ -182,8 +182,9 @@ The monolithic orchestrator that wires together all state, API calls, and UI ren
 | `currentObject` | `string \| null` | Detected Salesforce object name |
 | `fields` | `SalesforceField[]` | Full field list with selection & DF mapping state |
 | `filter` | `string` | Field name/label search filter |
-| `includeSystemFields` | `boolean` | Whether to show system fields |
 | `poc` | `string` | Point of Contact for the FMD |
+| `integrationProfileName` | `string` | Target Profile for Field Access |
+| `integrationPermSetName` | `string` | Target Permission Set for Field Access |
 | `sfApi` | `SalesforceApi \| null` | Authenticated API instance |
 | `isModalOpen` | `boolean` | Virtual field modal visibility |
 | `isConfirmModalOpen` | `boolean` | Export confirmation modal visibility |
@@ -253,6 +254,7 @@ Four-tab navigation with Lucide icons:
 | `fields` | Fields | `List` |
 | `mapping` | Mapping Rules | `ArrowRightLeft` |
 | `relationships` | Relationships | `Share2` |
+| `access` | Field Access | `Shield` |
 | `settings` | Settings | `Settings` |
 
 Active tab shows a purple underline indicator via CSS `after` pseudo-element.
@@ -286,7 +288,8 @@ Editable Salesforce → BigQuery type mapping table.
 | Section | Contents |
 |---|---|
 | Active Object | Displays current SF object being processed |
-| User Preferences | POC name, Include System Fields toggle |
+| User Preferences | POC name |
+| Field Access | Profile Name, Permission Set Name |
 | Popup Dimensions | Width/Height sliders (only in popup mode) |
 | Theme Colors | 12 color pickers for full theme customization |
 | Developer Footer | Author, GitHub, LinkedIn, Portfolio links |
@@ -379,6 +382,8 @@ Zustand + persist middleware → localStorage key: "app-settings"
 | `mobileWidth` | `600` | Popup width in px |
 | `mobileHeight` | `550` | Popup height in px |
 | `themeColors` | 12 color tokens | Full theme customization |
+| `integrationProfileName`| `'DF API - Only Integration Profile'` | Target profile for field access module |
+| `integrationPermSetName`| `'DF Datalake'` | Target permission set for field access module |
 
 **Actions**: `setMobileWidth`, `setMobileHeight`, `setThemeColor`, `resetSettings`.
 
@@ -570,10 +575,12 @@ When building integration pipelines, developers need to know which fields are re
 
 ### 15.2 Target Security Contexts
 
-| Type | Name |
+*Note: These are defaults and can be configured through the Settings module.*
+
+| Type | Default Name |
 |---|---|
 | Profile | `DF API - Only Integration Profile` |
-| Permission Set | `DFDatalake` |
+| Permission Set | `DF Datalake` |
 
 ### 15.3 SOQL Queries (`salesforceApi.ts`)
 
