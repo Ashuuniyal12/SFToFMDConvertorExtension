@@ -181,6 +181,8 @@ The monolithic orchestrator that wires together all state, API calls, and UI ren
 | `statusMsg` | `string` | Footer status indicator |
 | `currentObject` | `string \| null` | Detected Salesforce object name |
 | `fields` | `SalesforceField[]` | Full field list with selection & DF mapping state |
+| `allObjects` | `SObjectDescribe[]` | List of all available SObjects in the Org |
+| `objectsLoading` | `boolean` | Loading state for the global object list |
 | `filter` | `string` | Field name/label search filter |
 | `poc` | `string` | Point of Contact for the FMD |
 | `integrationProfileName` | `string` | Target Profile for Field Access |
@@ -190,6 +192,7 @@ The monolithic orchestrator that wires together all state, API calls, and UI ren
 | `isConfirmModalOpen` | `boolean` | Export confirmation modal visibility |
 | `showRefresh` | `boolean` | Show refresh button on connection failure |
 | `isFullScreen` | `boolean` | Full-screen tab mode (via `tabId` URL param) |
+| `errorMsg` | `string \| null` | Stores major exception reasons for the UI overlay |
 
 #### Initialization Flow
 
@@ -202,21 +205,33 @@ sequenceDiagram
 
     App->>App: useEffect → initializeContext()
     App->>BG: GET_SESSION_ID (tab URL)
+    
+    note over BG: Rewrites .lightning to .my.salesforce.com<br/>to get the exact Core API Session Token
+    BG->>Browser: chrome.cookies.get(targetUrl, "sid")
     BG-->>App: { sid, instanceUrl }
     App->>App: new SalesforceApi(instanceUrl, sid)
-    App->>CS: GET_OBJECT_CONTEXT
-    CS-->>App: { objectName }
-    App->>SF: resolveApiName(objectName)
-    SF-->>App: Resolved API name
 
-    par Parallel fetch
-        App->>SF: describe(objectName)
-        App->>SF: getDFMappings(objectName)
+    par Parallel fetch Context and Global Objects
+        App->>CS: GET_OBJECT_CONTEXT
+        App->>SF: describeGlobal()
     end
 
-    SF-->>App: Metadata + DF Mappings
-    App->>App: Process fields (DF linking, hiding)
-    App->>App: setFields(processedFields)
+    SF-->>App: List of all Org objects
+    CS-->>App: { objectName } or null
+
+    alt Context Object Found
+        App->>SF: resolveApiName(objectName)
+        SF-->>App: Resolved API name
+        par Parallel fetch
+            App->>SF: describe(objectName)
+            App->>SF: getDFMappings(objectName)
+        end
+        SF-->>App: Metadata + DF Mappings
+        App->>App: Process fields (DF linking, hiding)
+        App->>App: setFields(processedFields)
+    else No Context Found
+        App->>App: Update Status: "Ready. Please select an Object."
+    end
 ```
 
 #### DF (Formula Field) Processing Logic
@@ -265,6 +280,7 @@ The main data grid for viewing and selecting Salesforce fields.
 
 **Key Features**:
 - **Configurable Columns**: 10 available columns; users toggle visibility via a `Settings2` gear icon.
+- **Global Object Selector**: A dropdown allows users to switch context to any object in the Salesforce org instantly, without changing the URL.
 - **Column IDs**: `name`, `label`, `type`, `length`, `precision`, `scale`, `attributes`, `calculatedFormula`, `referenceTo`, `relationshipName`.
 - **Default Visible**: `name`, `label`, `type`, `length`, `precision`, `attributes`.
 - **Sorting**: Click column headers → ascending/descending sort with `ChevronUp`/`ChevronDown` icons.
@@ -311,6 +327,13 @@ Pre-export review modal showing all fields that will be exported.
 **Columns**: API Name, Label, Type, Source (DF MAPPED / STANDARD badge).
 **Actions**: Cancel or Export Excel.
 
+### 6.8 ErrorModal (`ErrorModal.tsx` — 56 lines)
+
+A blocking UI modal overlay displayed for critical operational failures.
+
+**Triggers**: API exceptions, Token mismatch, or improper domain boots (e.g. Chrome Extension page instead of Salesforce).
+**Actions**: Dismiss or "Refresh Page" depending on the error classification.
+
 ---
 
 ## 7. Utility Classes
@@ -322,6 +345,7 @@ REST API wrapper authenticated via session cookie.
 | Method | Endpoint | Purpose |
 |---|---|---|
 | `describe(objectName)` | `/services/data/v59.0/sobjects/{obj}/describe` | Fetch full field metadata |
+| `describeGlobal()` | `/services/data/v59.0/sobjects` | Fetch list of all objects in Org |
 | `query(soql)` | `/services/data/v59.0/query?q=...` | Execute arbitrary SOQL |
 | `resolveApiName(idOrName)` | SOQL on `EntityDefinition` | Convert Durable ID → API Name |
 | `getDFMappings(objectName)` | SOQL on `DF_Formula_Field_Mapping__mdt` | Fetch formula ↔ DF field mappings |

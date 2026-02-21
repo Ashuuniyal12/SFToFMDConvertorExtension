@@ -17,22 +17,30 @@ chrome.runtime.onMessage.addListener(
                 return true;
             }
 
-            chrome.cookies.getAll({ url: urlStr, name: "sid" }).then((cookies) => {
-                if (cookies && cookies.length > 0) {
-                    sendResponse({ sid: cookies[0].value, instanceUrl: urlObj.origin });
+            let targetDomain = urlObj.hostname;
+            if (targetDomain.includes('.lightning.force.com')) {
+                targetDomain = targetDomain.replace('.lightning.force.com', '.my.salesforce.com');
+            }
+
+            const targetUrl = `https://${targetDomain}`;
+
+            chrome.cookies.get({ url: targetUrl, name: "sid" }).then((cookie) => {
+                if (cookie) {
+                    sendResponse({ sid: cookie.value, instanceUrl: targetUrl });
                 } else {
-                    chrome.cookies.getAll({ domain: "salesforce.com", name: "sid" }).then((sfCookies) => {
-                        if (sfCookies && sfCookies.length > 0) {
-                            sendResponse({
-                                sid: sfCookies[0].value,
-                                instanceUrl: urlObj.origin,
-                            });
+                    chrome.cookies.getAll({ name: "sid" }).then((cookies) => {
+                        const apiCookie = cookies.find(c => c.domain.includes('my.salesforce.com') || c.domain.includes(targetDomain));
+                        if (apiCookie) {
+                            sendResponse({ sid: apiCookie.value, instanceUrl: targetUrl });
+                        } else if (cookies && cookies.length > 0) {
+                            sendResponse({ sid: cookies[0].value, instanceUrl: targetUrl });
                         } else {
                             sendResponse({ sid: null });
                         }
                     });
                 }
             });
+
             return true; // async response
         }
     }

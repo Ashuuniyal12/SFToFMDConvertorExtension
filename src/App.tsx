@@ -8,10 +8,12 @@ import { Settings } from './components/Settings';
 import { VirtualFieldModal } from './components/VirtualFieldModal';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import { IntegrationAccess } from './components/IntegrationAccess';
+import { ObjectSelector } from './components/ObjectSelector';
+import { ErrorModal } from './components/ErrorModal';
 import { SalesforceApi } from './utils/salesforceApi';
 import { MappingEngine } from './utils/mappingEngine';
 import { ExcelGenerator } from './utils/excelGenerator';
-import { SalesforceField } from './types';
+import { SalesforceField, SObjectDescribe } from './types';
 import './index.css';
 import { useSettingsStore } from './store/settingsStore';
 
@@ -34,11 +36,16 @@ function App() {
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const [showRefresh, setShowRefresh] = useState(false);
     const [isFullScreen, setIsFullScreen] = useState(false);
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
     // Integration Access state
     const [profilePerms, setProfilePerms] = useState<Record<string, { readable: boolean, editable: boolean }>>({});
     const [permSetPerms, setPermSetPerms] = useState<Record<string, { readable: boolean, editable: boolean }>>({});
     const [accessLoading, setAccessLoading] = useState(false);
+
+    // Object Selector state
+    const [allObjects, setAllObjects] = useState<SObjectDescribe[]>([]);
+    const [objectsLoading, setObjectsLoading] = useState(false);
 
     // Instantiations
     const mappingEngine = useMemo(() => new MappingEngine(), []);
@@ -157,7 +164,7 @@ function App() {
                         };
                     }
                     //else df are not present in current object itself but in proxy object 
-                    else{
+                    else {
                         return {
                             ...f,
                             dfMapping: {
@@ -173,7 +180,7 @@ function App() {
                             }
                         };
                     }
-                } else if (f.calculated && f.calculatedFormula != undefined && f.calculatedFormula != '' &&!f.dfMapping?.mappedDfName) {
+                } else if (f.calculated && f.calculatedFormula != undefined && f.calculatedFormula != '' && !f.dfMapping?.mappedDfName) {
                     return {
                         ...f,
                         dfMapping: {
@@ -267,7 +274,7 @@ function App() {
 
     const executeGenerate = async () => {
         setIsConfirmModalOpen(false);
-        const fieldsWithDFDetailsandNormalFields = setFieldForFinalExport(fields);   
+        const fieldsWithDFDetailsandNormalFields = setFieldForFinalExport(fields);
         // Prepare fields with DF logic
         const finalFields = fieldsWithDFDetailsandNormalFields.map(f => {
             if (f.calculated && f.calculatedFormula != undefined && f.calculatedFormula != '') {
@@ -337,15 +344,25 @@ function App() {
                 targetTab = tab;
             }
 
-            if (!targetTab || !targetTab.id) {
+            if (!targetTab || !targetTab.id || !targetTab.url) {
                 setStatusMsg("No active tab.");
+                return;
+            }
+
+            const urlStr = targetTab.url;
+            const isSalesforcePage = urlStr.includes('salesforce.com') || urlStr.includes('force.com');
+
+            if (!isSalesforcePage) {
+                const msg = "Not a Salesforce Domain.";
+                setStatusMsg(msg);
+                setErrorMsg("This extension can only be used on Salesforce pages. Please navigate to your Salesforce Org and try again.");
                 return;
             }
 
             const tabId = targetTab.id;
 
             // Get EXT Session
-            const sessionResp = await chrome.runtime.sendMessage({ action: "GET_SESSION_ID", url: targetTab.url });
+            const sessionResp = await chrome.runtime.sendMessage({ action: "GET_SESSION_ID", url: urlStr });
 
             let api: SalesforceApi | null = null;
             if (sessionResp && sessionResp.sid) {
@@ -353,12 +370,43 @@ function App() {
                 setSfApi(api);
                 setStatusMsg("Session Found.");
             } else {
-                setStatusMsg("Not logged in or Session not found.");
+                const msg = "Not logged in or Session not found.";
+                setStatusMsg(msg);
+                setErrorMsg(msg + " Please ensure you are logged into Salesforce and try again.");
+                return; // Stop initialization to let user see error
             }
 
             // Get Object Context
             try {
-                const contextResp = await chrome.tabs.sendMessage(tabId, { action: "GET_OBJECT_CONTEXT" });
+                // Fetch all objects first
+                if (api) {
+                    setObjectsLoading(true);
+                    try {
+                        const globalDescribe = await api.describeGlobal();
+                        if (globalDescribe && globalDescribe.sobjects) {
+                            const sortedObjects = globalDescribe.sobjects
+                                .map((obj: any) => ({
+                                    name: obj.name,
+                                    label: obj.label,
+                                    custom: obj.custom
+                                }))
+                                .sort((a: SObjectDescribe, b: SObjectDescribe) => a.label.localeCompare(b.label));
+                            setAllObjects(sortedObjects);
+                        }
+                    } catch (e) {
+                        console.warn("Failed to fetch global objects", e);
+                    } finally {
+                        setObjectsLoading(false);
+                    }
+                }
+
+                let contextResp: any = null;
+                try {
+                    contextResp = await chrome.tabs.sendMessage(tabId, { action: "GET_OBJECT_CONTEXT" });
+                } catch (e) {
+                    // This is expected if opened on a non-Salesforce page where the content script isn't injected.
+                    console.log("No content script context attached to this tab.", e);
+                }
 
                 if (contextResp && contextResp.objectName) {
                     let objName = contextResp.objectName;
@@ -379,17 +427,21 @@ function App() {
                         fetchFields(api, objName);
                     }
                 } else {
-                    setStatusMsg("Please go to Setup > Object Manager > [Object]");
+                    setStatusMsg("Ready. Please select an Object.");
                 }
             } catch (err: any) {
                 console.error(err);
-                setStatusMsg("Connection Failed: " + (err.message || "Refresh Page"));
+                const msg = "Connection Failed: " + (err.message || "Refresh Page");
+                setStatusMsg(msg);
                 setShowRefresh(true);
+                setErrorMsg(msg);
             }
 
         } catch (e: any) {
             console.error(e);
-            setStatusMsg("Error initializing: " + e.message);
+            const msg = "Error initializing: " + e.message;
+            setStatusMsg(msg);
+            setErrorMsg(msg);
         }
     };
 
@@ -439,6 +491,15 @@ function App() {
         }
     };
 
+    const handleObjectChange = (newObj: string) => {
+        if (!newObj) return;
+
+        setCurrentObject(newObj);
+        if (sfApi) {
+            fetchFields(sfApi, newObj);
+        }
+    };
+
     return (
         <div
             className={`flex flex-col bg-white dark:bg-[#121212] overflow-hidden ${isFullScreen ? 'w-full h-screen' : 'shadow-xl rounded-lg'}`}
@@ -463,6 +524,14 @@ function App() {
                                 value={filter}
                                 onChange={(e) => setFilter(e.target.value)}
                             />
+
+                            <ObjectSelector
+                                objects={allObjects}
+                                currentObject={currentObject}
+                                loading={objectsLoading}
+                                onSelect={handleObjectChange}
+                            />
+
                             <button
                                 className="bg-transparent border border-success dark:border-success text-success bg-success/10 hover:bg-success hover:text-white px-4 py-2 rounded text-[13px] font-medium transition-colors cursor-pointer whitespace-nowrap"
                                 onClick={() => setIsModalOpen(true)}
@@ -569,6 +638,13 @@ function App() {
                 onConfirm={executeGenerate}
                 fields={setFieldForFinalExport(fields)}
                 objectName={currentObject || 'Unknown'}
+            />
+
+            <ErrorModal
+                isOpen={!!errorMsg}
+                onClose={() => setErrorMsg(null)}
+                errorMessage={errorMsg || ''}
+                onRefresh={showRefresh ? handleRefreshPage : undefined}
             />
         </div>
     );

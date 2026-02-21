@@ -46,6 +46,12 @@ export interface SalesforceDescribeResult {
     [key: string]: any;
 }
 
+export interface SObjectDescribe {
+    name: string;
+    label: string;
+    custom: boolean;
+}
+
 export interface MappingConfig {
     dataset?: string;
     table?: string;

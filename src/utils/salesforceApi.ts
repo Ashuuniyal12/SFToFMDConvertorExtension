@@ -29,6 +29,25 @@ export class SalesforceApi {
 
         return await response.json();
     }
+
+    async describeGlobal(): Promise<any> {
+        const url = `${this.domain}/services/data/${this.apiVersion}/sobjects`;
+
+        const response = await fetch(url, {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${this.sessionId}`,
+                "Content-Type": "application/json"
+            }
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Salesforce Global Describe Error: ${response.status} - ${errorText}`);
+        }
+
+        return await response.json();
+    }
     async query(soql: string): Promise<any> {
         const url = `${this.domain}/services/data/${this.apiVersion}/query?q=${encodeURIComponent(soql)}`;
 
