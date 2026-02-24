@@ -20,6 +20,9 @@ import { useSettingsStore } from './store/settingsStore';
 // Lazy load RelationshipGraph to avoid header bloat and ensure fast initial load
 const RelationshipGraph = lazy(() => import('./modules/relationship-graph/components/RelationshipGraph').then(module => ({ default: module.RelationshipGraph })));
 
+// Lazy load ExcelForge module
+const ExcelForge = lazy(() => import('./modules/excel-forge/ExcelForge'));
+
 function App() {
     // State
     const [theme, setTheme] = useState<'light' | 'dark'>('light');
@@ -579,6 +582,19 @@ function App() {
                         isFullScreen={isFullScreen}
                         loading={accessLoading}
                     />
+                </div>
+            )}
+
+            {/* ExcelForge Tab */}
+            {activeTab === 'excelforge' && (
+                <div className={`flex-1 overflow-hidden flex flex-col ${isFullScreen ? 'm-4 rounded-lg bg-surface dark:bg-[#1E1E1E]' : ''}`}>
+                    <Suspense fallback={
+                        <div className="flex h-full items-center justify-center text-text-secondary gap-2">
+                            <Loader2 className="animate-spin" size={20} /> Loading ExcelForge Module...
+                        </div>
+                    }>
+                        <ExcelForge sfApi={sfApi} />
+                    </Suspense>
                 </div>
             )}
 
