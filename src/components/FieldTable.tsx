@@ -145,6 +145,124 @@ export const FieldTable: React.FC<FieldTableProps> = ({ fields, onToggleField, o
         }
     };
 
+    const renderFieldRow = (field: SalesforceField, index: number) => (
+        <React.Fragment key={`${field.name}-${index}`}>
+            <div
+                className={`grid items-center border-b border-border dark:border-border-dark last:border-b-0 hover:bg-[color-mix(in_srgb,var(--color-primary),transparent_90%)] transition-colors duration-100 ${field.calculated && field.calculatedFormula != undefined && field.calculatedFormula != ''? 'bg-[color-mix(in_srgb,var(--color-primary),transparent_80%)]' : ''}`}
+                style={{ gridTemplateColumns: gridTemplate }}
+            >
+                <div className="flex items-center justify-center p-2">
+                    <input
+                        type="checkbox"
+                        className="accent-primary w-4 h-4 cursor-pointer"
+                        checked={!!field.selected}
+                        onChange={(e) => onToggleField(field.name, e.target.checked)}
+                    />
+                </div>
+
+                {AVAILABLE_COLUMNS.map(col => visibleColumns.has(col.id) && (
+                    <React.Fragment key={col.id}>
+                        {renderCell(field, col.id)}
+                    </React.Fragment>
+                ))}
+            </div>
+
+            {/* DF Mapping Row for Formula Fields */}
+            {field.calculated && field.calculatedFormula != undefined && field.calculatedFormula != '' && field.selected && (
+                <div className="col-span-full bg-gray-50 dark:bg-[#252525] p-3 pl-14 border-b border-border dark:border-border-dark animate-in slide-in-from-top-2 duration-200">
+                    <div className="flex flex-col gap-2">
+                        <div className="text-[11px] font-semibold text-text-secondary dark:text-text-dark-secondary uppercase tracking-wider flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+                            Destinational Field (DF) Mapping
+                            {field.dfMapping?.mappedDfName && <span className="text-[10px] bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 px-1.5 py-0.5 rounded border border-purple-200 dark:border-purple-800 ml-2">AUTO-MAPPED</span>}
+                        </div>
+
+                        <div className="grid grid-cols-4 gap-3">
+                            <div className="flex flex-col gap-1">
+                                <label className="text-[11px] text-text-secondary dark:text-text-dark-secondary">DF Label</label>
+                                <input
+                                    type="text"
+                                    className={`p-1.5 text-[12px] border border-border dark:border-border-dark rounded bg-white dark:bg-[#1E1E1E] text-text-primary dark:text-text-dark-primary focus:border-primary outline-none ${field.dfMapping?.mappedDfName ? 'opacity-70 bg-gray-100 dark:bg-[#2A2A2A] cursor-not-allowed' : ''}`}
+                                    value={field.dfMapping?.manualDf?.label || `DF ${field.label}`}
+                                    onChange={(e) => !field.dfMapping?.mappedDfName && onUpdateDf(field.name, { ...field.dfMapping?.manualDf, label: e.target.value })}
+                                    placeholder={`DF ${field.label}`}
+                                    disabled={!!field.dfMapping?.mappedDfName}
+                                />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-[11px] text-text-secondary dark:text-text-dark-secondary">DF API Name</label>
+                                <input
+                                    type="text"
+                                    className={`p-1.5 text-[12px] border border-border dark:border-border-dark rounded bg-white dark:bg-[#1E1E1E] text-text-primary dark:text-text-dark-primary focus:border-primary outline-none font-mono ${field.dfMapping?.mappedDfName ? 'opacity-70 bg-gray-100 dark:bg-[#2A2A2A] cursor-not-allowed' : ''}`}
+                                    value={field.dfMapping?.manualDf?.name || `DF_${field.name.replace(/__c$/, '')}__c`}
+                                    onChange={(e) => !field.dfMapping?.mappedDfName && onUpdateDf(field.name, { ...field.dfMapping?.manualDf, name: e.target.value })}
+                                    placeholder={`DF_${field.name}`}
+                                    disabled={!!field.dfMapping?.mappedDfName}
+                                />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-[11px] text-text-secondary dark:text-text-dark-secondary">Type</label>
+                                <select
+                                    className={`p-1.5 text-[12px] border border-border dark:border-border-dark rounded bg-white dark:bg-[#1E1E1E] text-text-primary dark:text-text-dark-primary focus:border-primary outline-none ${field.dfMapping?.mappedDfName ? 'opacity-70 bg-gray-100 dark:bg-[#2A2A2A] cursor-not-allowed' : ''}`}
+                                    value={field.dfMapping?.manualDf?.type || field.type}
+                                    onChange={(e) => !field.dfMapping?.mappedDfName && onUpdateDf(field.name, { ...field.dfMapping?.manualDf, type: e.target.value })}
+                                    disabled={!!field.dfMapping?.mappedDfName}
+                                >
+                                    <option value="string">String</option>
+                                    <option value="double">Double</option>
+                                    <option value="boolean">Boolean</option>
+                                    <option value="date">Date</option>
+                                    <option value="datetime">DateTime</option>
+                                    <option value="currency">Currency</option>
+                                    <option value="percent">Percent</option>
+                                    <option value="int">Int</option>
+                                    <option value="reference">Reference</option>
+                                    <option value="textarea">Text Area</option>
+                                    <option value="picklist">Picklist</option>
+                                </select>
+                            </div>
+                            <div className="flex gap-2">
+                                <div className="flex flex-col gap-1 w-1/3">
+                                    <label className="text-[11px] text-text-secondary dark:text-text-dark-secondary">Length</label>
+                                    <input
+                                        type="number"
+                                        className={`p-1.5 text-[12px] border border-border dark:border-border-dark rounded bg-white dark:bg-[#1E1E1E] text-text-primary dark:text-text-dark-primary focus:border-primary outline-none ${field.dfMapping?.mappedDfName ? 'opacity-70 bg-gray-100 dark:bg-[#2A2A2A] cursor-not-allowed' : ''}`}
+                                        value={field.dfMapping?.manualDf?.length || field.length || 0}
+                                        onChange={(e) => !field.dfMapping?.mappedDfName && onUpdateDf(field.name, { ...field.dfMapping?.manualDf, length: parseInt(e.target.value) })}
+                                        disabled={!!field.dfMapping?.mappedDfName}
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-1 w-1/3">
+                                    <label className="text-[11px] text-text-secondary dark:text-text-dark-secondary">Prec</label>
+                                    <input
+                                        type="number"
+                                        className={`p-1.5 text-[12px] border border-border dark:border-border-dark rounded bg-white dark:bg-[#1E1E1E] text-text-primary dark:text-text-dark-primary focus:border-primary outline-none ${field.dfMapping?.mappedDfName ? 'opacity-70 bg-gray-100 dark:bg-[#2A2A2A] cursor-not-allowed' : ''}`}
+                                        value={field.dfMapping?.manualDf?.precision || field.precision || 0}
+                                        onChange={(e) => !field.dfMapping?.mappedDfName && onUpdateDf(field.name, { ...field.dfMapping?.manualDf, precision: parseInt(e.target.value) })}
+                                        disabled={!!field.dfMapping?.mappedDfName}
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-1 w-1/3">
+                                    <label className="text-[11px] text-text-secondary dark:text-text-dark-secondary">Scale</label>
+                                    <input
+                                        type="number"
+                                        className={`p-1.5 text-[12px] border border-border dark:border-border-dark rounded bg-white dark:bg-[#1E1E1E] text-text-primary dark:text-text-dark-primary focus:border-primary outline-none ${field.dfMapping?.mappedDfName ? 'opacity-70 bg-gray-100 dark:bg-[#2A2A2A] cursor-not-allowed' : ''}`}
+                                        value={field.dfMapping?.manualDf?.scale ?? field.scale ?? 0}
+                                        onChange={(e) => !field.dfMapping?.mappedDfName && onUpdateDf(field.name, { ...field.dfMapping?.manualDf, scale: parseInt(e.target.value) })}
+                                        disabled={!!field.dfMapping?.mappedDfName}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </React.Fragment>
+    );
+
+    const cdcEnabledFields = sortedFields.filter(f => f.cdcSharingEnabled);
+    const cdcNotEnabledFields = sortedFields.filter(f => !f.cdcSharingEnabled);
+
     return (
         <div className="flex flex-col w-full text-[13px] border border-border dark:border-border-dark rounded-md bg-white dark:bg-surface-dark relative">
 
@@ -211,120 +329,19 @@ export const FieldTable: React.FC<FieldTableProps> = ({ fields, onToggleField, o
 
             {/* Body */}
             <div className="flex flex-col w-fit min-w-full">
-                {sortedFields.map((field, index) => (
-                    <React.Fragment key={`${field.name}-${index}`}>
-                        <div
-                            className={`grid items-center border-b border-border dark:border-border-dark last:border-b-0 hover:bg-[color-mix(in_srgb,var(--color-primary),transparent_90%)] transition-colors duration-100 ${field.calculated && field.calculatedFormula != undefined && field.calculatedFormula != ''? 'bg-[color-mix(in_srgb,var(--color-primary),transparent_80%)]' : ''}`}
-                            style={{ gridTemplateColumns: gridTemplate }}
-                        >
-                            <div className="flex items-center justify-center p-2">
-                                <input
-                                    type="checkbox"
-                                    className="accent-primary w-4 h-4 cursor-pointer"
-                                    checked={!!field.selected}
-                                    onChange={(e) => onToggleField(field.name, e.target.checked)}
-                                />
-                            </div>
-
-                            {AVAILABLE_COLUMNS.map(col => visibleColumns.has(col.id) && (
-                                <React.Fragment key={col.id}>
-                                    {renderCell(field, col.id)}
-                                </React.Fragment>
-                            ))}
-                        </div>
-
-                        {/* DF Mapping Row for Formula Fields */}
-                        {field.calculated && field.calculatedFormula != undefined && field.calculatedFormula != '' && field.selected && (
-                            <div className="col-span-full bg-gray-50 dark:bg-[#252525] p-3 pl-14 border-b border-border dark:border-border-dark animate-in slide-in-from-top-2 duration-200">
-                                <div className="flex flex-col gap-2">
-                                    <div className="text-[11px] font-semibold text-text-secondary dark:text-text-dark-secondary uppercase tracking-wider flex items-center gap-2">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
-                                        Destinational Field (DF) Mapping
-                                        {field.dfMapping?.mappedDfName && <span className="text-[10px] bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 px-1.5 py-0.5 rounded border border-purple-200 dark:border-purple-800 ml-2">AUTO-MAPPED</span>}
-                                    </div>
-
-                                    <div className="grid grid-cols-4 gap-3">
-                                        <div className="flex flex-col gap-1">
-                                            <label className="text-[11px] text-text-secondary dark:text-text-dark-secondary">DF Label</label>
-                                            <input
-                                                type="text"
-                                                className={`p-1.5 text-[12px] border border-border dark:border-border-dark rounded bg-white dark:bg-[#1E1E1E] text-text-primary dark:text-text-dark-primary focus:border-primary outline-none ${field.dfMapping?.mappedDfName ? 'opacity-70 bg-gray-100 dark:bg-[#2A2A2A] cursor-not-allowed' : ''}`}
-                                                value={field.dfMapping?.manualDf?.label || `DF ${field.label}`}
-                                                onChange={(e) => !field.dfMapping?.mappedDfName && onUpdateDf(field.name, { ...field.dfMapping?.manualDf, label: e.target.value })}
-                                                placeholder={`DF ${field.label}`}
-                                                disabled={!!field.dfMapping?.mappedDfName}
-                                            />
-                                        </div>
-                                        <div className="flex flex-col gap-1">
-                                            <label className="text-[11px] text-text-secondary dark:text-text-dark-secondary">DF API Name</label>
-                                            <input
-                                                type="text"
-                                                className={`p-1.5 text-[12px] border border-border dark:border-border-dark rounded bg-white dark:bg-[#1E1E1E] text-text-primary dark:text-text-dark-primary focus:border-primary outline-none font-mono ${field.dfMapping?.mappedDfName ? 'opacity-70 bg-gray-100 dark:bg-[#2A2A2A] cursor-not-allowed' : ''}`}
-                                                value={field.dfMapping?.manualDf?.name || `DF_${field.name.replace(/__c$/, '')}__c`}
-                                                onChange={(e) => !field.dfMapping?.mappedDfName && onUpdateDf(field.name, { ...field.dfMapping?.manualDf, name: e.target.value })}
-                                                placeholder={`DF_${field.name}`}
-                                                disabled={!!field.dfMapping?.mappedDfName}
-                                            />
-                                        </div>
-                                        <div className="flex flex-col gap-1">
-                                            <label className="text-[11px] text-text-secondary dark:text-text-dark-secondary">Type</label>
-                                            <select
-                                                className={`p-1.5 text-[12px] border border-border dark:border-border-dark rounded bg-white dark:bg-[#1E1E1E] text-text-primary dark:text-text-dark-primary focus:border-primary outline-none ${field.dfMapping?.mappedDfName ? 'opacity-70 bg-gray-100 dark:bg-[#2A2A2A] cursor-not-allowed' : ''}`}
-                                                value={field.dfMapping?.manualDf?.type || field.type}
-                                                onChange={(e) => !field.dfMapping?.mappedDfName && onUpdateDf(field.name, { ...field.dfMapping?.manualDf, type: e.target.value })}
-                                                disabled={!!field.dfMapping?.mappedDfName}
-                                            >
-                                                <option value="string">String</option>
-                                                <option value="double">Double</option>
-                                                <option value="boolean">Boolean</option>
-                                                <option value="date">Date</option>
-                                                <option value="datetime">DateTime</option>
-                                                <option value="currency">Currency</option>
-                                                <option value="percent">Percent</option>
-                                                <option value="int">Int</option>
-                                                <option value="reference">Reference</option>
-                                                <option value="textarea">Text Area</option>
-                                                <option value="picklist">Picklist</option>
-                                            </select>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <div className="flex flex-col gap-1 w-1/3">
-                                                <label className="text-[11px] text-text-secondary dark:text-text-dark-secondary">Length</label>
-                                                <input
-                                                    type="number"
-                                                    className={`p-1.5 text-[12px] border border-border dark:border-border-dark rounded bg-white dark:bg-[#1E1E1E] text-text-primary dark:text-text-dark-primary focus:border-primary outline-none ${field.dfMapping?.mappedDfName ? 'opacity-70 bg-gray-100 dark:bg-[#2A2A2A] cursor-not-allowed' : ''}`}
-                                                    value={field.dfMapping?.manualDf?.length || field.length || 0}
-                                                    onChange={(e) => !field.dfMapping?.mappedDfName && onUpdateDf(field.name, { ...field.dfMapping?.manualDf, length: parseInt(e.target.value) })}
-                                                    disabled={!!field.dfMapping?.mappedDfName}
-                                                />
-                                            </div>
-                                            <div className="flex flex-col gap-1 w-1/3">
-                                                <label className="text-[11px] text-text-secondary dark:text-text-dark-secondary">Prec</label>
-                                                <input
-                                                    type="number"
-                                                    className={`p-1.5 text-[12px] border border-border dark:border-border-dark rounded bg-white dark:bg-[#1E1E1E] text-text-primary dark:text-text-dark-primary focus:border-primary outline-none ${field.dfMapping?.mappedDfName ? 'opacity-70 bg-gray-100 dark:bg-[#2A2A2A] cursor-not-allowed' : ''}`}
-                                                    value={field.dfMapping?.manualDf?.precision || field.precision || 0}
-                                                    onChange={(e) => !field.dfMapping?.mappedDfName && onUpdateDf(field.name, { ...field.dfMapping?.manualDf, precision: parseInt(e.target.value) })}
-                                                    disabled={!!field.dfMapping?.mappedDfName}
-                                                />
-                                            </div>
-                                            <div className="flex flex-col gap-1 w-1/3">
-                                                <label className="text-[11px] text-text-secondary dark:text-text-dark-secondary">Scale</label>
-                                                <input
-                                                    type="number"
-                                                    className={`p-1.5 text-[12px] border border-border dark:border-border-dark rounded bg-white dark:bg-[#1E1E1E] text-text-primary dark:text-text-dark-primary focus:border-primary outline-none ${field.dfMapping?.mappedDfName ? 'opacity-70 bg-gray-100 dark:bg-[#2A2A2A] cursor-not-allowed' : ''}`}
-                                                    value={field.dfMapping?.manualDf?.scale ?? field.scale ?? 0}
-                                                    onChange={(e) => !field.dfMapping?.mappedDfName && onUpdateDf(field.name, { ...field.dfMapping?.manualDf, scale: parseInt(e.target.value) })}
-                                                    disabled={!!field.dfMapping?.mappedDfName}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </React.Fragment>
-                ))}
+                {cdcEnabledFields.length > 0 && (
+                    <div className="bg-gray-100 dark:bg-[#252525] p-2 pl-4 text-sm font-semibold border-b border-border dark:border-border-dark flex items-center justify-between text-text-primary dark:text-text-dark-primary">
+                        <span>CDC Sharing Enabled <span className="text-text-secondary dark:text-text-dark-secondary text-xs font-normal ml-1">({cdcEnabledFields.length})</span></span>
+                    </div>
+                )}
+                {cdcEnabledFields.map((field, index) => renderFieldRow(field, index))}
+                
+                {cdcNotEnabledFields.length > 0 && (
+                    <div className="bg-gray-100 dark:bg-[#252525] p-2 pl-4 text-sm font-semibold border-y border-border dark:border-border-dark flex items-center justify-between text-text-primary dark:text-text-dark-primary">
+                        <span>CDC Sharing Not Enabled <span className="text-text-secondary dark:text-text-dark-secondary text-xs font-normal ml-1">({cdcNotEnabledFields.length})</span></span>
+                    </div>
+                )}
+                {cdcNotEnabledFields.map((field, index) => renderFieldRow(field, index))}
                 {sortedFields.length === 0 && (
                     <div className="flex justify-center p-5 text-text-secondary dark:text-text-dark-secondary">
                         No fields found.

@@ -40,6 +40,7 @@ export interface SalesforceField {
     selected?: boolean;
     isVirtual?: boolean;
     hidden?: boolean;
+    cdcSharingEnabled?: boolean;
 }
 
 export interface SalesforceDescribeResult {

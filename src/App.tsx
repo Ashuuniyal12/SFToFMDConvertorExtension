@@ -123,14 +123,21 @@ function App() {
             setPermSetPerms(permSetPermsResult);
 
             // First pass: Create initial map with explicit type
-            let tempFields: SalesforceField[] = metadata.fields.map(f => ({
-                ...f,
-                selected: true,
-                dfMapping: {
-                    mappedDfName: f.calculated ? dfMappings[f.name] : undefined,
-                    manualDf: undefined
-                }
-            }));
+            let tempFields: SalesforceField[] = metadata.fields.map(f => {
+                const isReadableInProfile = profilePermsResult[f.name]?.readable || false;
+                const isReadableInPermSet = permSetPermsResult[f.name]?.readable || false;
+                const isCdcSharingEnabled = isReadableInProfile && isReadableInPermSet;
+
+                return {
+                    ...f,
+                    selected: isCdcSharingEnabled,
+                    cdcSharingEnabled: isCdcSharingEnabled,
+                    dfMapping: {
+                        mappedDfName: f.calculated ? dfMappings[f.name] : undefined,
+                        manualDf: undefined
+                    }
+                };
+            });
 
             // console.log('tempFields',tempFields);
 
@@ -150,6 +157,8 @@ function App() {
                         // Populate details into manualDf for display
                         return {
                             ...f,
+                            cdcSharingEnabled: dfField.cdcSharingEnabled,
+                            selected: dfField.cdcSharingEnabled,
                             dfMapping: {
                                 ...f.dfMapping,
                                 manualDf: {
@@ -167,6 +176,8 @@ function App() {
                     else {
                         return {
                             ...f,
+                            cdcSharingEnabled: false,
+                            selected: false,
                             dfMapping: {
                                 ...f.dfMapping,
                                 manualDf: {
@@ -183,6 +194,8 @@ function App() {
                 } else if (f.calculated && f.calculatedFormula != undefined && f.calculatedFormula != '' && !f.dfMapping?.mappedDfName) {
                     return {
                         ...f,
+                        cdcSharingEnabled: false,
+                        selected: false,
                         dfMapping: {
                             ...f.dfMapping,
                             manualDf: {
