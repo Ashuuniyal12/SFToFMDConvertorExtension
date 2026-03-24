@@ -125,7 +125,6 @@ export class MappingEngine {
         const lowerType = field.type.toLowerCase();
 
         // Handle numeric types with precision/scale
-        // Handle numeric types with precision/scale
         if (['double', 'currency', 'percent', 'int'].includes(lowerType)) {
             const p = field.precision !== undefined ? field.precision : 18;
             const s = field.scale !== undefined ? field.scale : 0;
@@ -135,8 +134,11 @@ export class MappingEngine {
             return `${field.type}(${integerPart},${s})`;
         }
 
-        // Handle lookup relationships
+        // Handle lookup and master-detail relationships
         if (lowerType === 'reference' && field.referenceTo && field.referenceTo.length > 0) {
+            if (field.cascadeDelete) {
+                return `Master-Detail(${field.referenceTo.join(', ')})`;
+            }
             return `Lookup(${field.referenceTo.join(', ')})`;
         }
 

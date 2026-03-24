@@ -23,7 +23,8 @@ export interface SalesforceField {
     defaultValue?: any;
     picklistValues?: any[];
     calculatedFormula?: string;
-
+    cascadeDelete?: boolean;
+    
     dfMapping?: {
         mappedDfName?: string;
         manualDf?: {

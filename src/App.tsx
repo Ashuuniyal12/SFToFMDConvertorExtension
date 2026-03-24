@@ -350,6 +350,14 @@ function App() {
             }
 
             const urlStr = targetTab.url;
+            
+            if (urlStr.startsWith('https://mss.accenture.com/')) {
+                const msg = "Environment Restricted";
+                setStatusMsg(msg);
+                setErrorMsg("Access Denied: You cannot generate FMDs directly from production data or this specific sandbox route. Please log into a lower environment (such as Dev, Test, or Stage) to proceed.");
+                return;
+            }
+
             const isSalesforcePage = urlStr.includes('salesforce.com') ||
                 urlStr.includes('force.com') ||
                 urlStr.includes('salesforce-setup.com');
