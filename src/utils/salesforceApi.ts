@@ -87,46 +87,77 @@ export class SalesforceApi {
         return idOrName;
     }
 
-    async getProfileFieldPermissions(objectName: string, profileName: string): Promise<Record<string, { readable: boolean, editable: boolean }>> {
+    async getProfileFieldPermissions(objectName: string, profileName: string): Promise<{ objectAccess: { readable: boolean, editable: boolean }, fieldPerms: Record<string, { readable: boolean, editable: boolean }> }> {
         try {
-            const q = `SELECT Field, PermissionsRead, PermissionsEdit FROM FieldPermissions WHERE Parent.Profile.Name = '${profileName}' AND SobjectType = '${objectName}'`;
-            const result = await this.query(q);
-            const perms: Record<string, { readable: boolean, editable: boolean }> = {};
-            if (result.records) {
-                result.records.forEach((rec: any) => {
-                    // Field comes back as "ObjectName.FieldName"
+            // Priority 1: Get Object-level defaults
+            const objQuery = `SELECT PermissionsRead, PermissionsEdit FROM ObjectPermissions WHERE SobjectType = '${objectName}' AND ParentId IN (SELECT Id FROM PermissionSet WHERE Profile.Name = '${profileName}')`;
+            let objectAccess = { readable: false, editable: false };
+            try {
+                const objResult = await this.query(objQuery);
+                if (objResult.records && objResult.records.length > 0) {
+                    objectAccess = {
+                        readable: !!objResult.records[0].PermissionsRead,
+                        editable: !!objResult.records[0].PermissionsEdit
+                    };
+                }
+            } catch (e) {
+                console.warn(`Failed to fetch profile object permissions for ${objectName}`, e);
+            }
+
+            // Priority 2: Get explicit Field overrides
+            const fieldQuery = `SELECT Field, PermissionsRead, PermissionsEdit FROM FieldPermissions WHERE SobjectType = '${objectName}' AND ParentId IN (SELECT Id FROM PermissionSet WHERE Profile.Name = '${profileName}')`;
+            const fieldResult = await this.query(fieldQuery);
+            const fieldPerms: Record<string, { readable: boolean, editable: boolean }> = {};
+            if (fieldResult.records) {
+                fieldResult.records.forEach((rec: any) => {
                     const fieldName = rec.Field?.split('.')?.pop() || rec.Field;
-                    perms[fieldName] = {
+                    fieldPerms[fieldName] = {
                         readable: !!rec.PermissionsRead,
                         editable: !!rec.PermissionsEdit
                     };
                 });
             }
-            return perms;
+            return { objectAccess, fieldPerms };
         } catch (e) {
             console.warn("Failed to fetch profile field permissions", e);
-            return {};
+            return { objectAccess: { readable: false, editable: false }, fieldPerms: {} };
         }
     }
 
-    async getPermSetFieldPermissions(objectName: string, permSetLabel: string): Promise<Record<string, { readable: boolean, editable: boolean }>> {
+    async getPermSetFieldPermissions(objectName: string, permSetLabel: string): Promise<{ objectAccess: { readable: boolean, editable: boolean }, fieldPerms: Record<string, { readable: boolean, editable: boolean }> }> {
         try {
-            const q = `SELECT Field, PermissionsRead, PermissionsEdit FROM FieldPermissions WHERE Parent.Label = '${permSetLabel}' AND Parent.IsOwnedByProfile = false AND SobjectType = '${objectName}'`;
-            const result = await this.query(q);
-            const perms: Record<string, { readable: boolean, editable: boolean }> = {};
-            if (result.records) {
-                result.records.forEach((rec: any) => {
+            // Priority 1: Get Object-level defaults
+            const objQuery = `SELECT PermissionsRead, PermissionsEdit FROM ObjectPermissions WHERE SobjectType = '${objectName}' AND ParentId IN (SELECT Id FROM PermissionSet WHERE Name = '${permSetLabel}' OR Label = '${permSetLabel}')`;
+            let objectAccess = { readable: false, editable: false };
+            try {
+                const objResult = await this.query(objQuery);
+                if (objResult.records && objResult.records.length > 0) {
+                    objectAccess = {
+                        readable: !!objResult.records[0].PermissionsRead,
+                        editable: !!objResult.records[0].PermissionsEdit
+                    };
+                }
+            } catch (e) {
+                console.warn(`Failed to fetch perm set object permissions for ${objectName}`, e);
+            }
+
+            // Priority 2: Get explicit Field overrides
+            const fieldQuery = `SELECT Field, PermissionsRead, PermissionsEdit FROM FieldPermissions WHERE SobjectType = '${objectName}' AND ParentId IN (SELECT Id FROM PermissionSet WHERE Name = '${permSetLabel}' OR Label = '${permSetLabel}')`;
+            const fieldResult = await this.query(fieldQuery);
+            const fieldPerms: Record<string, { readable: boolean, editable: boolean }> = {};
+            if (fieldResult.records) {
+                fieldResult.records.forEach((rec: any) => {
                     const fieldName = rec.Field?.split('.')?.pop() || rec.Field;
-                    perms[fieldName] = {
+                    fieldPerms[fieldName] = {
                         readable: !!rec.PermissionsRead,
                         editable: !!rec.PermissionsEdit
                     };
                 });
             }
-            return perms;
+            return { objectAccess, fieldPerms };
         } catch (e) {
             console.warn("Failed to fetch permission set field permissions", e);
-            return {};
+            return { objectAccess: { readable: false, editable: false }, fieldPerms: {} };
         }
     }
 

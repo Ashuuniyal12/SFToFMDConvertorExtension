@@ -112,12 +112,20 @@ function App() {
         setStatusMsg("Fetching Metadata...");
         setAccessLoading(true);
         try {
-            const [metadata, dfMappings, profilePermsResult, permSetPermsResult] = await Promise.all([
+            const [metadata, dfMappings, profilePermsRaw, permSetPermsRaw] = await Promise.all([
                 api.describe(objectName),
                 api.getDFMappings(objectName),
                 api.getProfileFieldPermissions(objectName, integrationProfileName),
                 api.getPermSetFieldPermissions(objectName, integrationPermSetName)
             ]);
+
+            const profilePermsResult: Record<string, { readable: boolean, editable: boolean }> = {};
+            const permSetPermsResult: Record<string, { readable: boolean, editable: boolean }> = {};
+
+            metadata.fields.forEach(f => {
+                profilePermsResult[f.name] = profilePermsRaw.fieldPerms[f.name] || profilePermsRaw.objectAccess;
+                permSetPermsResult[f.name] = permSetPermsRaw.fieldPerms[f.name] || permSetPermsRaw.objectAccess;
+            });
 
             setProfilePerms(profilePermsResult);
             setPermSetPerms(permSetPermsResult);
@@ -126,7 +134,8 @@ function App() {
             let tempFields: SalesforceField[] = metadata.fields.map(f => {
                 const isReadableInProfile = profilePermsResult[f.name]?.readable || false;
                 const isReadableInPermSet = permSetPermsResult[f.name]?.readable || false;
-                const isCdcSharingEnabled = isReadableInProfile && isReadableInPermSet;
+                const isRequiredReference = f.nillable === false && f.type === 'reference';
+                const isCdcSharingEnabled = (isReadableInProfile && isReadableInPermSet) || isRequiredReference;
 
                 return {
                     ...f,
@@ -363,7 +372,7 @@ function App() {
             }
 
             const urlStr = targetTab.url;
-            
+
             if (urlStr.startsWith('https://mss.accenture.com/') || urlStr.startsWith('https://accenture.my.salesforce-setup.com/') || urlStr.startsWith('https://accenture.lightning.force.com/')) {
                 const msg = "Environment Restricted";
                 setStatusMsg(msg);
