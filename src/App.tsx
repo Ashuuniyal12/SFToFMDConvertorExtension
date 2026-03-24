@@ -351,7 +351,7 @@ function App() {
 
             const urlStr = targetTab.url;
             
-            if (urlStr.startsWith('https://mss.accenture.com/')) {
+            if (urlStr.startsWith('https://mss.accenture.com/') || urlStr.startsWith('https://accenture.my.salesforce-setup.com/') || urlStr.startsWith('https://accenture.lightning.force.com/')) {
                 const msg = "Environment Restricted";
                 setStatusMsg(msg);
                 setErrorMsg("Access Denied: You cannot generate FMDs directly from production data or this specific sandbox route. Please log into a lower environment (such as Dev, Test, or Stage) to proceed.");

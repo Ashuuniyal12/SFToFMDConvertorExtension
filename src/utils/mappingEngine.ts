@@ -1,7 +1,7 @@
 import { FMDRow, MappingConfig, SalesforceField } from '../types';
 
 const DEFAULT_MAPPINGS: Record<string, string> = {
-    // 📝 Text Data Types
+    // Text Data Types
     "string": "STRING",
     "textarea": "STRING",
     "email": "STRING",
@@ -14,27 +14,27 @@ const DEFAULT_MAPPINGS: Record<string, string> = {
     "id": "STRING", // Added
     "encryptedstring": "STRING", // Encrypted Text
 
-    // 🔢 Number Data Types
+    // Number Data Types
     "currency": "FLOAT",
     "double": "FLOAT",
     "int": "FLOAT",
     "percent": "FLOAT",
 
-    // 📅 Date & Time Data Types
+    // Date & Time Data Types
     "date": "TIMESTAMP",
     "datetime": "TIMESTAMP",
     "time": "TIMESTAMP",
 
-    // 🔘 Picklist Types (already covered above)
-    // 🔗 Relationship Data Types (covered by reference)
+    // Picklist Types (already covered above)
+    // Relationship Data Types (covered by reference)
 
-    // 🧮 Advanced / Special Types
+    // Advanced / Special Types
     "boolean": "BOOLEAN", // User requested BOOLEAN
     "base64": "STRING", // or BYTES
     "address": "STRING",
     "location": "STRING",
 
-    // ➕ Missing Salesforce Field Types (Added)
+    // Missing Salesforce Field Types (Added)
     "anytype": "STRING", // Fallback
 };
 
@@ -66,7 +66,7 @@ export class MappingEngine {
         // Check for specific field names / system fields
         const fieldNameLower = field.name.toLowerCase();
 
-        // ➕ Missing Salesforce Field Types (Added by name)
+        //  Missing Salesforce Field Types (Added by name)
         if (fieldNameLower === 'id' ||
             fieldNameLower === 'recordtypeid' ||
             fieldNameLower === 'ownerid' ||
@@ -88,27 +88,27 @@ export class MappingEngine {
 
         const lowerType = field.type.toLowerCase();
 
-        // 📝 Text Data Types
+        //  Text Data Types
         if (["string", "textarea", "email", "url", "phone", "picklist", "multipicklist", "combobox", "encryptedstring", "anytype"].includes(lowerType)) {
             return "STRING";
         }
 
-        // 🔢 Number Data Types
+        // Number Data Types
         if (["double", "int", "currency", "percent"].includes(lowerType)) {
             return "FLOAT";
         }
 
-        // 📅 Date & Time Data Types
+        // Date & Time Data Types
         if (["date", "datetime", "time"].includes(lowerType)) {
             return "TIMESTAMP";
         }
 
-        // 🔗 Relationship Data Types
+        //  Relationship Data Types
         if (lowerType === 'reference') {
             return "STRING";
         }
 
-        // 🧮 Advanced / Special Types
+        // Advanced / Special Types
         if (lowerType === 'boolean') {
             return "BOOLEAN";
         }
@@ -141,9 +141,6 @@ export class MappingEngine {
             }
             return `Lookup(${field.referenceTo.join(', ')})`;
         }
-
-        // Handle master-detail (if discernable, usually also 'reference' but might have specific cascade delete props, assuming reference for now or check isCascadingDelete if available in metadata)
-        // For now, simple reference check is good.
 
         // Handle Roll-Up Summary
         // Heuristic: calculated=true, but no formula (usually implies it's a summary field stored in backend)
