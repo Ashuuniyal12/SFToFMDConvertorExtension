@@ -11,6 +11,18 @@ interface ErrorModalProps {
 export const ErrorModal: React.FC<ErrorModalProps> = ({ isOpen, onClose, errorMessage, onRefresh }) => {
     if (!isOpen) return null;
 
+    const handleDismiss = () => {
+        onClose();
+        window.close();
+        if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.getCurrent) {
+            chrome.tabs.getCurrent((tab) => {
+                if (tab && tab.id) {
+                    chrome.tabs.remove(tab.id);
+                }
+            });
+        }
+    };
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
             <div className="bg-white dark:bg-[#1E1E1E] rounded-lg shadow-xl w-full max-w-md overflow-hidden border border-border dark:border-border-dark animate-in fade-in zoom-in duration-200">
@@ -27,7 +39,7 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({ isOpen, onClose, errorMe
 
                 <div className="p-4 border-t border-border dark:border-border-dark flex justify-end gap-3 bg-gray-50 dark:bg-[#121212]">
                     <button
-                        onClick={onClose}
+                        onClick={handleDismiss}
                         className="px-4 py-2 rounded text-[13px] font-medium text-text-primary dark:text-text-dark-primary hover:bg-gray-200 dark:hover:bg-[#2A2A2A] transition-colors"
                     >
                         Dismiss
